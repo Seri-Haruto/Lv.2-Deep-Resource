@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>心のぐるぐる描画</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #f2f2f2;
+        }
+        canvas {
+            border: 2px solid #000;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>あなたの「心のぐるぐる」を描いてください</h1>
+
+    <canvas id="drawingCanvas" width="600" height="400"></canvas>
+
+        <!-- 感情入力欄 -->
+    <div id="emotion-inputs">
+        <label for="valence">快 - 不快 (Valence):</label><br>
+        <input type="range" id="valence" name="valence" min="-1" max="1" step="0.1" value="0">
+        <span id="valence-value">0</span>
+        <br><br>
+
+        <label for="arousal">覚醒 - 鎮静 (Arousal):</label><br>
+        <input type="range" id="arousal" name="arousal" min="-1" max="1" step="0.1" value="0">
+        <span id="arousal-value">0</span>
+        <br><br>
+
+        <label for="userId">ニックネーム（任意）:</label><br>
+        <input type="text" id="userId" name="userId" placeholder="匿名可">
+    </div>
+    <br>
+
+    <div id="buttons">
+        <button id="clearBtn">消去</button>
+        <button id="submitBtn">送信</button>
+    </div>
+
+    <p>※ 線を描いた後、「送信」を押すと記録されます。</p>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
