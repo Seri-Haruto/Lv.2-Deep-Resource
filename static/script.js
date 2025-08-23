@@ -58,12 +58,23 @@ arousalSlider.addEventListener("input", syncLabels);
 syncLabels();
 
 // Pointer events
-function getPos(evt) {
+function getPos(e) {
   const rect = canvas.getBoundingClientRect();
-  const cx = evt.clientX ?? (evt.touches && evt.touches[0].clientX);
-  const cy = evt.clientY ?? (evt.touches && evt.touches[0].clientY);
-  return { x: cx - rect.left, y: cy - rect.top };
+
+  // 画面上の座標（タッチにも対応）
+  const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+  const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+
+  // 表示サイズ → キャンバス内部座標へ変換係数
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
 }
+
 
 function beginStroke(evt) {
   drawing = true;
