@@ -1,278 +1,170 @@
-// DOM
-const canvas = document.getElementById("drawingCanvas");
-const ctx = canvas.getContext("2d");
-const penSize = document.getElementById("penSize");
-const valenceSlider = document.getElementById("valence");
-const arousalSlider = document.getElementById("arousal");
-const valenceValue = document.getElementById("valence-value");
-const arousalValue = document.getElementById("arousal-value");
-const clearBtn = document.getElementById("clearBtn");
-const submitBtn = document.getElementById("submitBtn");
-const issueIdBtn = document.getElementById("issueIdBtn");
-const taskBtn = document.getElementById("taskBtn");
-const copyIdBtn = document.getElementById("copyIdBtn");
-const exportLink = document.getElementById("exportLink");
-const userIdInput = document.getElementById("userId");
-const idHelp = document.getElementById("idHelp");
-const toastEl = document.getElementById("toast");
+(() => {
+  const canvas  = document.getElementById("drawingCanvas");
+  const ctx     = canvas.getContext("2d", { willReadFrequently: true });
 
-// State
-let drawing = false;
-let points = []; // {x,y,t,color,w,m}
-let color = "#111";
-let width = parseInt(penSize.value, 10);
+  const elIdInput = document.getElementById("participantId");
+  const elIdStat  = document.getElementById("idStatus");
+  const elVal     = document.getElementById("valence");
+  const elAro     = document.getElementById("arousal");
+  const elValDesc = document.getElementById("valence-desc");
+  const elAroDesc = document.getElementById("arousal-desc");
 
-// Retina + responsive
-function fitCanvas() {
-  const ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-  const rect = canvas.getBoundingClientRect();
-  const w = Math.max(320, Math.floor(rect.width));
-  const h = Math.floor(w * (560 / 880));
-  canvas.width = w * ratio;
-  canvas.height = h * ratio;
-  canvas.style.height = `${h}px`;
-  canvas.style.width = `${w}px`;
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  redraw();
-}
-window.addEventListener("resize", fitCanvas);
-setTimeout(fitCanvas, 0);
+  // Buttons
+  const on = (id, evt, fn) => document.getElementById(id).addEventListener(evt, fn);
+  on("issueBtn","click", issueId);
+  on("setIdBtn","click", setId);
+  on("newTaskBtn","click", async () => { clearCanvas(true); try{ await fetchTask(); }catch{ alert("お題の取得に失敗しました．"); } });
+  on("clearBtn","click", () => clearCanvas(true));
+  on("submitBtn","click", submitDrawing);
 
-// Toolbar
-penSize.addEventListener("input", () => (width = parseInt(penSize.value, 10)));
-document.querySelectorAll(".color").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".color").forEach((b) => b.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    color = btn.dataset.color;
-  });
-});
+  let drawing = false;
+  let points = [];
+  let participantId = null;
+  let currentValence = null;
+  let currentArousal = null;
 
-// Labels
-function syncLabels() {
-  valenceValue.textContent = valenceSlider.value;
-  arousalValue.textContent = arousalSlider.value;
-}
-valenceSlider.addEventListener("input", syncLabels);
-arousalSlider.addEventListener("input", syncLabels);
-syncLabels();
+  const validId = id => /^[A-Za-z0-9]{6,16}$/.test(id);
+  const updateIdStatus = () => elIdStat.textContent = participantId ? `ID: ${participantId}（設定済み）` : '未設定';
 
-// ！！！Pointer events
-function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
+  const valenceDesc = v =>
+    v <= -7 ? "とても不快" :
+    v <= -3 ? "やや不快"  :
+    v <=  3 ? "中立"      :
+    v <=  7 ? "やや快"    : "とても快";
+  const arousalDesc = a =>
+    a <= -7 ? "とても静か / 眠そう" :
+    a <= -3 ? "やや静か"           :
+    a <=  3 ? "普通"               :
+    a <=  7 ? "やや活発"           : "とても活発 / 興奮";
 
-  // イベント座標（タッチにも対応）
-  const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
-  const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+  // ===== フレーム（外枠のみ） =====
+  function drawDecor() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 表示上のサイズと内部解像度の比率を計算
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+    // 青い外枠のみ
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#2563eb';
+    ctx.strokeRect(1.5, 1.5, canvas.width-3, canvas.height-3);
+    ctx.restore();
+  }
 
-  return {
-    x: (clientX - rect.left) * scaleX,
-    y: (clientY - rect.top) * scaleY
-  };
-}
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-
-  canvas.width  = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 座標系を補正
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas(); // 初期実行
-
-// タッチ操作対応
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  drawing = true;
-  points = [];
-  ctx.beginPath();
-  const t = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const p = { x: t.clientX - rect.left, y: t.clientY - rect.top };
-  ctx.moveTo(p.x, p.y);
-  points.push(p);
-});
-
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  if (!drawing) return;
-  const t = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const p = { x: t.clientX - rect.left, y: t.clientY - rect.top };
-  ctx.lineTo(p.x, p.y);
-  ctx.stroke();
-  points.push(p);
-});
-
-canvas.addEventListener("touchend", () => {
-  drawing = false;
-});
-
-// !!!
-
-
-
-function beginStroke(evt) {
-  drawing = true;
-  const p = getPos(evt);
-  ctx.beginPath();
-  ctx.moveTo(p.x, p.y);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  points.push({ x: p.x, y: p.y, t: Date.now(), color, w: width, m: true });
-}
-
-function drawStroke(evt) {
-  if (!drawing) return;
-  const p = getPos(evt);
-  ctx.lineTo(p.x, p.y);
-  ctx.stroke();
-  points.push({ x: p.x, y: p.y, t: Date.now(), color, w: width });
-}
-
-function endStroke() {
-  drawing = false;
-}
-
-canvas.addEventListener("pointerdown", (e) => {
-  canvas.setPointerCapture(e.pointerId);
-  beginStroke(e);
-});
-canvas.addEventListener("pointermove", drawStroke);
-canvas.addEventListener("pointerup", endStroke);
-canvas.addEventListener("pointercancel", endStroke);
-
-// Redraw (for resize)
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!points.length) return;
-  let lastStyle = {};
-  for (const p of points) {
-    if (p.m || p.color !== lastStyle.color || p.w !== lastStyle.w) {
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth = p.w;
-      lastStyle = { color: p.color, w: p.w };
-    } else {
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
+  // ===== API =====
+  async function issueId() {
+    try {
+      const res = await fetch("/issue_id");
+      if (!res.ok) throw new Error("issue_id failed");
+      const data = await res.json();
+      participantId = data.id;
+      localStorage.setItem("participant_id", participantId);
+      elIdInput.value = participantId;
+      updateIdStatus();
+      alert("IDを発行しました．必ず控えてください．");
+    } catch {
+      alert("ID発行に失敗しました．接続を確認してください．");
     }
   }
-}
 
-// Clear
-clearBtn.addEventListener("click", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  points = [];
-});
-
-// ID
-const ID_RE = /^[A-Za-z0-9]{6,16}$/;
-
-issueIdBtn.addEventListener("click", async () => {
-  try {
-    const res = await fetch("/issue_id");
-    const { id } = await res.json();
-    userIdInput.value = id;
-    idHelp.textContent = "発行しました。保存しておいてください。";
-    idHelp.style.color = "var(--ok)";
-    updateExportLink();
-    toast("ID を発行しました");
-  } catch {
-    toast("ID 発行に失敗しました", "error");
+  function setId() {
+    const id = (elIdInput.value || "").trim();
+    if (!validId(id)) { alert("英数字6〜16桁で入力してください．"); return; }
+    participantId = id;
+    localStorage.setItem("participant_id", participantId);
+    updateIdStatus();
+    alert("IDを設定しました．");
   }
-});
 
-copyIdBtn.addEventListener("click", async () => {
-  if (!userIdInput.value) return;
-  await navigator.clipboard.writeText(userIdInput.value);
-  toast("ID をコピーしました");
-});
-
-userIdInput.addEventListener("input", () => {
-  if (!userIdInput.value) {
-    idHelp.textContent = "";
-  } else if (ID_RE.test(userIdInput.value)) {
-    idHelp.textContent = "OK";
-    idHelp.style.color = "var(--ok)";
-  } else {
-    idHelp.textContent = "英数字6〜16桁で入力してください";
-    idHelp.style.color = "var(--warn)";
-  }
-  updateExportLink();
-});
-
-function updateExportLink() {
-  const id = userIdInput.value.trim();
-  exportLink.href = id && ID_RE.test(id) ? `/export?user_id=${encodeURIComponent(id)}` : "/export";
-}
-updateExportLink();
-
-// Task (V/A)
-taskBtn.addEventListener("click", async () => {
-  try {
+  async function fetchTask() {
     const res = await fetch("/task");
+    if (!res.ok) throw new Error("task failed");
     const data = await res.json();
-    valenceSlider.value = data.valence;
-    arousalSlider.value = data.arousal;
-    syncLabels();
-    toast(`お題: V ${data.valence}, A ${data.arousal}`);
-  } catch {
-    toast("お題取得に失敗しました", "error");
-  }
-});
-
-// Submit
-submitBtn.addEventListener("click", async () => {
-  if (points.length < 3) {
-    toast("もう少しぐるぐるを描いてください！", "warn");
-    return;
-  }
-  const user_id = userIdInput.value.trim();
-  if (!ID_RE.test(user_id)) {
-    toast("参加者IDが不正です（英数字6〜16桁）", "warn");
-    return;
+    currentValence = data.valence;
+    currentArousal = data.arousal;
+    elVal.textContent = currentValence;
+    elAro.textContent = currentArousal;
+    elValDesc.textContent = `（${valenceDesc(currentValence)}）`;
+    elAroDesc.textContent = `（${arousalDesc(currentArousal)}）`;
   }
 
-  const payload = {
-    user_id,
-    valence: Number(valenceSlider.value),
-    arousal: Number(arousalSlider.value),
-    points
-  };
+  async function submitDrawing() {
+    if (!participantId || !validId(participantId)) {
+      alert("参加者IDが未設定です．"); return;
+    }
+    if (currentValence === null || currentArousal === null) {
+      alert("お題が未取得です．"); return;
+    }
+    if (points.length < 3) { alert("もう少し円を描いてください！"); return; }
 
-  try {
     const res = await fetch("/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ user_id: participantId, valence: currentValence, arousal: currentArousal, points })
     });
-    if (!res.ok) throw new Error("submit failed");
-    toast("送信しました！");
+    if (!res.ok) { alert("送信に失敗しました．"); return; }
+    alert("送信しました！ 同じIDで続けて提出できます．");
+    clearCanvas(true);
+    try { await fetchTask(); } catch {}
+  }
+
+  // ===== Canvas =====
+  function getMousePos(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function getTouchPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function clearCanvas(withDecor=false) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     points = [];
-  } catch {
-    toast("送信に失敗しました", "error");
+    if (withDecor) drawDecor();
   }
-});
 
-// Toast
-function toast(msg, type = "info") {
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-  toastEl.style.borderColor =
-    type === "error" ? "var(--danger)" : type === "warn" ? "var(--warn)" : "rgba(255,255,255,.12)";
-  clearTimeout(toastEl._t);
-  toastEl._t = setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 2200);
-}
+  canvas.addEventListener("mousedown", e => {
+    drawing = true; points = [];
+    ctx.beginPath();
+    const p = getMousePos(e); ctx.moveTo(p.x, p.y); points.push(p);
+  });
+  canvas.addEventListener("mousemove", e => {
+    if (!drawing) return;
+    const p = getMousePos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); points.push(p);
+  });
+  canvas.addEventListener("mouseup", () => drawing = false);
+  canvas.addEventListener("mouseleave", () => drawing = false);
+
+  canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
+    drawing = true; points = [];
+    ctx.beginPath();
+    const p = getTouchPos(e); ctx.moveTo(p.x, p.y); points.push(p);
+  }, { passive:false });
+  canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+    if (!drawing) return;
+    const p = getTouchPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); points.push(p);
+  }, { passive:false });
+  canvas.addEventListener("touchend", () => { drawing = false; });
+
+  // ===== Init =====
+  (async function init(){
+    const params = new URLSearchParams(location.search);
+    const qid = params.get("id");
+    const saved = localStorage.getItem("participant_id");
+    if (qid && validId(qid)) {
+      participantId = qid; elIdInput.value = participantId; localStorage.setItem("participant_id", participantId);
+    } else if (saved && validId(saved)) {
+      participantId = saved; elIdInput.value = participantId;
+    } else {
+      try { await issueId(); } catch {}
+    }
+    updateIdStatus();
+
+    drawDecor();
+    try { await fetchTask(); } catch {}
+
+    window.addEventListener('orientationchange', ()=> drawDecor());
+    window.addEventListener('resize', ()=> drawDecor());
+  })();
+})();

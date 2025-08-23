@@ -11,6 +11,9 @@ import re
 import secrets
 import string
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'drawing_emotion.db')
+
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # ====== ID 発行・検証 ======
@@ -20,9 +23,7 @@ def gen_id(length=8):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-# ====== DB ======
-DB_PATH = 'drawing_emotion.db'
-
+# ====== DB 初期化 ======
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -48,8 +49,8 @@ def healthz():
 
 # ====== お題API ======
 @app.route('/task', methods=['GET'])
-@app.route('/get_task', methods=['GET'])  # 互換
 def task():
+    # -10 〜 +10 の整数
     valence = random.randint(-10, 10)
     arousal = random.randint(-10, 10)
     return jsonify({"valence": valence, "arousal": arousal})
@@ -81,8 +82,8 @@ def submit():
         return jsonify({"status": "error", "message": "invalid valence/arousal"}), 400
 
     points = data.get('points')
-    if not isinstance(points, list) or len(points) == 0:
-        return jsonify({"status": "error", "message": "points missing"}), 400
+    if not isinstance(points, list) or len(points) < 3:
+        return jsonify({"status": "error", "message": "points missing or too short"}), 400
 
     points_json = json.dumps(points, ensure_ascii=False, separators=(',', ':'))
 
@@ -104,6 +105,7 @@ def submit():
 # ====== CSVエクスポート ======
 @app.route('/export', methods=['GET'])
 def export_csv():
+    """ 全件 or ?user_id=XXXX で絞り込み """
     user_id = request.args.get('user_id', '', type=str).strip()
 
     conn = sqlite3.connect(DB_PATH)
@@ -124,16 +126,16 @@ def export_csv():
         writer.writerow(row)
 
     output.seek(0)
+    name = 'drawing_emotion_data.csv' if not user_id else f'drawing_emotion_{user_id}.csv'
     return send_file(
         io.BytesIO(output.getvalue().encode('utf-8-sig')),
         mimetype='text/csv',
         as_attachment=True,
-        download_name=('drawing_emotion_data.csv' if not user_id else f'drawing_emotion_{user_id}.csv')
+        download_name=name
     )
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.environ.get("PORT", 10000)) 
+    port = int(os.environ.get("PORT", 10000))
+    # Render等で公開する場合は 0.0.0.0 にバインド
     app.run(host='0.0.0.0', port=port, debug=False)
-
-
