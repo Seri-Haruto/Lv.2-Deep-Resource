@@ -57,15 +57,15 @@ valenceSlider.addEventListener("input", syncLabels);
 arousalSlider.addEventListener("input", syncLabels);
 syncLabels();
 
-// Pointer events
+// ！！！Pointer events
 function getPos(e) {
   const rect = canvas.getBoundingClientRect();
 
-  // 画面上の座標（タッチにも対応）
+  // イベント座標（タッチにも対応）
   const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
   const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
 
-  // 表示サイズ → キャンバス内部座標へ変換係数
+  // 表示上のサイズと内部解像度の比率を計算
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
 
@@ -74,6 +74,48 @@ function getPos(e) {
     y: (clientY - rect.top) * scaleY
   };
 }
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width  = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 座標系を補正
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas(); // 初期実行
+
+// タッチ操作対応
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  drawing = true;
+  points = [];
+  ctx.beginPath();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const p = { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  ctx.moveTo(p.x, p.y);
+  points.push(p);
+});
+
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const p = { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  points.push(p);
+});
+
+canvas.addEventListener("touchend", () => {
+  drawing = false;
+});
+
+// !!!
+
 
 
 function beginStroke(evt) {
