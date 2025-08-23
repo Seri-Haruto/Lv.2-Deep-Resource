@@ -1,59 +1,230 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>心のぐるぐる描画</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            background-color: #f2f2f2;
-        }
-        canvas {
-            border: 2px solid #000;
-            margin-top: 20px;
-            background-color: #fff;
-        }
-        #buttons {
-            margin-top: 20px;
-        }
-        button {
-            font-size: 16px;
-            padding: 10px 20px;
-            margin: 0 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>心のぐるぐる描画 | Emotion × Drawing Lab</title>
+
+  <!-- フォント & 外部CSS（あれば読み込み） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+JP:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
+ 
 </head>
 <body>
-    <h1>あなたの「心のぐるぐる」を描いてください</h1>
-
-    <canvas id="drawingCanvas" width="600" height="400"></canvas>
-
-        <!-- 感情入力欄 -->
-    <div id="emotion-inputs">
-        <label for="valence">快 - 不快 (Valence):</label><br>
-        <input type="range" id="valence" name="valence" min="-1" max="1" step="0.1" value="0">
-        <span id="valence-value">0</span>
-        <br><br>
-
-        <label for="arousal">覚醒 - 鎮静 (Arousal):</label><br>
-        <input type="range" id="arousal" name="arousal" min="-1" max="1" step="0.1" value="0">
-        <span id="arousal-value">0</span>
-        <br><br>
-
-        <label for="userId">ニックネーム（任意）:</label><br>
-        <input type="text" id="userId" name="userId" placeholder="匿名可">
+  <header class="container">
+    <nav class="nav">
+      <div class="brand">Emotion × Drawing</div>
+      <div>
+        <a href="#howto">使い方</a>
+        <a href="/export">CSV</a>
+      </div>
+    </nav>
+    <div class="hero">
+      <h1>「心のぐるぐる」を<span class="accent">可視化</span>しよう</h1>
+      <p>描線の軌跡と Valence / Arousal を同時に収集する実験ページです。</p>
+      <div class="toolbar">
+        <!-- 既存のIDに合わせたボタン（JSはそのまま動く） -->
+        <button id="issueBtn" class="btn ghost">IDを発行</button>
+        <button id="setIdBtn" class="btn primary">IDを設定</button>
+      </div>
     </div>
-    <br>
+  </header>
 
-    <div id="buttons">
-        <button id="clearBtn">消去</button>
-        <button id="submitBtn">送信</button>
-    </div>
+  <main class="container grid">
+    <!-- 左：キャンバス -->
+    <section class="card drawing">
+      <div class="head"><h2>Drawing Canvas</h2></div>
+      <div class="canvas-wrap">
+        <!-- 正方形キャンバス（ID/サイズは現行JSに合わせて維持） -->
+        <canvas id="drawingCanvas" width="500" height="500"></canvas>
+      </div>
+      <div class="body" style="padding:0 16px 16px;">
+        <div class="actions">
+          <button id="newTaskBtn" class="btn ghost">お題を更新</button>
+          <button id="clearBtn" class="btn ghost">消去</button>
+          <button id="submitBtn" class="btn primary">送信</button>
+        </div>
+        <p class="small">
+          ※ お題の値に近いイメージで，線の勢い・大きさ・密度などを工夫して「円」を1つ描いてください。<br>
+          Valence：気分（不快 ← 0 → 快），Arousal：活動度（静か ← 0 → 活発）．値は −10 〜 +10（21段階）．
+        </p>
+      </div>
+    </section>
 
-    <p>※ 線を描いた後、「送信」を押すと記録されます。</p>
+    <!-- 右：コントロールパネル -->
+    <aside class="card panel">
+      <div class="head"><h2>Experiment Panel</h2></div>
+      <div class="body">
+        <div class="row">
+          <label for="participantId">参加者ID（英数字：6〜16桁）</label>
+          <input id="participantId" type="text" placeholder="例: A1b2C3d4" />
+          <div id="idStatus" class="small">未設定</div>
+        </div>
 
-    <script src="/static/script.js"></script>
+        <div class="row">
+          <div class="pillwrap" id="task">
+            <div class="pill">
+              <strong>Valence:</strong> <span id="valence">--</span>
+              <span id="valence-desc" class="small"></span>
+            </div>
+            <div class="pill">
+              <strong>Arousal:</strong> <span id="arousal">--</span>
+              <span id="arousal-desc" class="small"></span>
+            </div>
+          </div>
+        </div>
+
+        <details id="howto" class="row small">
+          <summary>使い方</summary>
+          <ol>
+            <li>上の「IDを発行」または「IDを設定」で参加者IDを用意</li>
+            <li>「お題を更新」で V/A を確認</li>
+            <li>キャンバスに円を1つ描いて「送信」</li>
+            <li>CSVはヘッダー右上のリンクからダウンロード</li>
+          </ol>
+        </details>
+      </div>
+    </aside>
+  </main>
+
+  <footer><small>© 2025 Emotion × Drawing Lab</small></footer>
+
+  <!-- === ここから下は“あなたの現行JS”をそのまま配置（ID名は全て維持） === -->
+  <script>
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    let drawing = false;
+    let points = [];
+    let currentValence = null;
+    let currentArousal = null;
+    let participantId = null;
+
+    function validId(id) {
+      return /^[A-Za-z0-9]{6,16}$/.test(id);
+    }
+    function updateIdStatus() {
+      const el = document.getElementById("idStatus");
+      if (participantId) {
+        el.textContent = `ID: ${participantId}（設定済み）`;
+      } else {
+        el.textContent = "未設定";
+      }
+    }
+    function initId() {
+      const params = new URLSearchParams(location.search);
+      const qid = params.get("id");
+      const saved = localStorage.getItem("participant_id");
+      if (qid && validId(qid)) {
+        participantId = qid;
+        localStorage.setItem("participant_id", participantId);
+        document.getElementById("participantId").value = participantId;
+      } else if (saved && validId(saved)) {
+        participantId = saved;
+        document.getElementById("participantId").value = participantId;
+      }
+      updateIdStatus();
+    }
+    function valenceDesc(v) {
+      if (v <= -7) return "とても不快";
+      if (v <= -3) return "やや不快";
+      if (v <= 3)  return "中立";
+      if (v <= 7)  return "やや快";
+      return "とても快";
+    }
+    function arousalDesc(a) {
+      if (a <= -7) return "とても静か / 眠そう";
+      if (a <= -3) return "やや静か";
+      if (a <= 3)  return "普通";
+      if (a <= 7)  return "やや活発";
+      return "とても活発 / 興奮";
+    }
+    async function fetchTask() {
+      const res = await fetch("/task");
+      if (!res.ok) throw new Error("task fetch failed");
+      const data = await res.json();
+      currentValence = data.valence;
+      currentArousal = data.arousal;
+      document.getElementById("valence").textContent = currentValence;
+      document.getElementById("arousal").textContent = currentArousal;
+      document.getElementById("valence-desc").textContent = "（" + valenceDesc(currentValence) + "）";
+      document.getElementById("arousal-desc").textContent = "（" + arousalDesc(currentArousal) + "）";
+    }
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    canvas.addEventListener("mousedown", (e) => {
+      drawing = true; points = [];
+      ctx.beginPath();
+      const p = getPos(e);
+      ctx.moveTo(p.x, p.y);
+      points.push(p);
+    });
+    canvas.addEventListener("mousemove", (e) => {
+      if (!drawing) return;
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      points.push(p);
+    });
+    canvas.addEventListener("mouseup", () => { drawing = false; });
+    canvas.addEventListener("mouseleave", () => { drawing = false; });
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      points = [];
+    }
+    document.getElementById("issueBtn").addEventListener("click", async () => {
+      const res = await fetch("/issue_id");
+      if (!res.ok) { alert("ID発行に失敗しました．"); return; }
+      const data = await res.json();
+      participantId = data.id;
+      localStorage.setItem("participant_id", participantId);
+      document.getElementById("participantId").value = participantId;
+      updateIdStatus();
+      alert("発行したIDを必ず控えてください： " + participantId);
+    });
+    document.getElementById("setIdBtn").addEventListener("click", () => {
+      const id = document.getElementById("participantId").value.trim();
+      if (!validId(id)) { alert("英数字6〜16桁で入力してください．例：A1b2C3"); return; }
+      participantId = id;
+      localStorage.setItem("participant_id", participantId);
+      updateIdStatus();
+      alert("IDを設定しました：" + participantId);
+    });
+    document.getElementById("newTaskBtn").addEventListener("click", async () => {
+      clearCanvas();
+      try { await fetchTask(); } catch { alert("お題の取得に失敗しました．"); }
+    });
+    document.getElementById("clearBtn").addEventListener("click", clearCanvas);
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      if (!participantId || !validId(participantId)) {
+        alert("参加者IDが未設定です（英数字6〜16桁）．『IDを発行』または『IDを設定』を行ってください．");
+        return;
+      }
+      if (points.length < 3) { alert("もう少し円を描いてください！"); return; }
+      if (currentValence === null || currentArousal === null) {
+        alert("お題が未取得です．『お題を更新』を押してください．"); return;
+      }
+      const res = await fetch("/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: participantId,
+          valence: currentValence,
+          arousal: currentArousal,
+          points: points
+        })
+      });
+      if (!res.ok) { alert("送信に失敗しました．"); return; }
+      alert("送信しました！ 同じIDで続けて提出できます．\n作業完了後はクラウドワークスの所定欄に『参加者ID』をご記入ください。");
+      clearCanvas();
+      try { await fetchTask(); } catch {}
+    });
+    initId();
+    fetchTask().catch(() => alert("お題の取得に失敗しました．"));
+  </script>
 </body>
 </html>

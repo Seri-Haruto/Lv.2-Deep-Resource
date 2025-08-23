@@ -1,47 +1,74 @@
-body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    background-color: #f9f9f9;
-    margin: 0;
-    padding: 20px;
-    text-align: center;
-    color: #333;
+:root {
+  --bg: #f8fafc;           /* 明るい背景 */
+  --panel: #ffffff;
+  --panel-border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #3b82f6;       /* 基調の青 */
+  --accent-strong: #2563eb;/* 濃い青 */
+  --ok: #16a34a;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 6px 20px rgba(0,0,0,.08);
 }
 
-h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #444;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; padding:0; background:var(--bg); color:var(--text);
+  font-family:"Inter","Noto Sans JP",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+  line-height:1.6;
 }
 
-canvas {
-    border: 2px solid #333;
-    background-color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    cursor: crosshair;
+.container{max-width:1120px;margin:0 auto;padding:24px}
+
+/* Header */
+.nav{display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:800;font-size:18px;color:var(--accent-strong)}
+.nav .link{color:var(--text);text-decoration:none;margin-left:16px;opacity:.8}
+.nav .link:hover{opacity:1;color:var(--accent-strong)}
+
+/* Hero */
+.hero{padding:56px 0 32px;text-align:left}
+.hero-title{font-size:clamp(28px,4vw,42px);margin:0 0 8px}
+.accent{color:var(--accent-strong)}
+.hero-sub{color:var(--muted);margin:0 0 20px}
+.toolbar,.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:start}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+/* Card */
+.card{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.card-head,.head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--panel-border)}
+.card h2{font-size:18px;margin:0;color:var(--accent-strong)}
+.panel .body{padding:16px;display:grid;gap:16px}
+
+/* Buttons */
+.btn{border:1px solid transparent;color:#fff;background:var(--accent);padding:10px 16px;border-radius:8px;cursor:pointer;transition:.2s}
+.btn:hover{background:var(--accent-strong)}
+.btn.ghost{background:#fff;color:var(--accent-strong);border:1px solid var(--accent-strong)}
+.btn.ghost:hover{background:var(--accent-strong);color:#fff}
+.btn.subtle{background:#fff;border:1px solid var(--panel-border);color:var(--text)}
+
+/* Inputs */
+input[type="text"]{background:#fff;border:1px solid var(--panel-border);border-radius:8px;padding:10px 12px;color:var(--text);width:100%}
+
+/* Pills */
+.pillwrap{display:flex;gap:12px;flex-wrap:wrap}
+.pill{border:1px solid var(--panel-border);border-radius:999px;padding:6px 12px;background:#f1f5f9;font-size:14px;color:var(--text)}
+.desc{color:var(--muted);margin-left:6px}
+
+/* Canvas */
+.canvas-wrap{padding:12px}
+canvas{
+  width:100%; height:auto; display:block;
+  background:#fff;                 /* ← キャンバスは白 */
+  border:2px solid var(--accent-strong);
+  border-radius:12px;
+  box-shadow:inset 0 0 4px rgba(0,0,0,.05);
 }
 
-#buttons {
-    margin-top: 20px;
-}
-
-button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    margin: 0 10px;
-    font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-p {
-    font-size: 14px;
-    color: #666;
-    margin-top: 10px;
-}
+/* Footer */
+.site-footer{padding:24px;text-align:center;color:var(--muted);font-size:13px}
