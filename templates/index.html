@@ -1,128 +1,144 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>心のぐるぐる描画</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>心のぐるぐる描画 | Emotion × Drawing Lab</title>
+
+  <!-- フォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+JP:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
   <style>
-    body {
-      font-family: sans-serif;
-      background:#f2f2f2;
-      margin:0;
-      padding:24px;
-      text-align:center;
-      color:#333;
-    }
-    .card {
-      background:#fff;
-      max-width:840px;
-      margin:0 auto;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.08);
-    }
+    /* スマホでの描画を優先 */
     canvas {
-      display:block;
-      margin:10px auto;
-      border:2px solid #000;
-      background:#fff;
-      width:90vw;
-      max-width:500px;
-      height:90vw;
-      max-height:500px;
-      touch-action:none;   /* ← スマホでのスクロール無効化 */
+      touch-action: none; /* スクロールやズーム無効化 */
     }
-    button {
-      padding:10px 16px;
-      font-size:14px;
-      border:0;
-      border-radius:8px;
-      cursor:pointer;
-    }
-    button.primary { background:#2563eb; color:#fff; }
-    button.secondary { background:#e5e7eb; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>あなたの心のぐるぐるを描いてください</h1>
-
-    <!-- 正方形キャンバス -->
-    <canvas id="drawingCanvas" width="500" height="500"></canvas>
-
-    <div class="row">
-      <button id="clearBtn" class="secondary">消去</button>
-      <button id="submitBtn" class="primary">送信</button>
+  <header class="container">
+    <nav class="nav">
+      <div class="brand">Emotion × Drawing</div>
+      <div>
+        <a href="#howto">使い方</a>
+        <a href="/export">CSV</a>
+      </div>
+    </nav>
+    <div class="hero">
+      <h1>「心のぐるぐる」を<span class="accent">描画</span>しよう</h1>
+      <p>描線の軌跡と Valence / Arousal の情報を収集する実験ページです。</p>
+      <div class="toolbar">
+        <button id="issueBtn" class="btn ghost">IDを発行</button>
+        <button id="setIdBtn" class="btn primary">IDを設定</button>
+      </div>
     </div>
-  </div>
+  </header>
+
+  <main class="container grid">
+    <!-- 左：キャンバス -->
+    <section class="card drawing">
+      <div class="head"><h2>Drawing Canvas</h2></div>
+      <div class="canvas-wrap">
+        <canvas id="drawingCanvas" width="500" height="500"></canvas>
+      </div>
+      <div class="body">
+        <div class="actions">
+          <button id="newTaskBtn" class="btn ghost">お題を更新</button>
+          <button id="clearBtn" class="btn ghost">消去</button>
+          <button id="submitBtn" class="btn primary">送信</button>
+        </div>
+        <p class="small">
+          ※ お題の値に近いイメージで，線の勢い・大きさ・密度などを工夫して「円」を1つ描いてください。<br>
+          Valence：気分（不快 ← 0 → 快），Arousal：活動度（静か ← 0 → 活発）．値は −10 〜 +10（21段階）．
+        </p>
+      </div>
+    </section>
+
+    <!-- 右：コントロールパネル -->
+    <aside class="card panel">
+      <div class="head"><h2>Experiment Panel</h2></div>
+      <div class="body">
+        <div class="row">
+          <label for="participantId">参加者ID（英数字：6〜16桁）</label>
+          <input id="participantId" type="text" placeholder="例: A1b2C3d4" />
+          <div id="idStatus" class="small">未設定</div>
+        </div>
+
+        <div class="row">
+          <div class="pillwrap" id="task">
+            <div class="pill">
+              <strong>Valence:</strong> <span id="valence">--</span>
+              <span id="valence-desc" class="small"></span>
+            </div>
+            <div class="pill">
+              <strong>Arousal:</strong> <span id="arousal">--</span>
+              <span id="arousal-desc" class="small"></span>
+            </div>
+          </div>
+        </div>
+
+        <details id="howto" class="row small">
+          <summary>使い方</summary>
+          <ol>
+            <li>「IDを発行」または「IDを設定」で参加者IDを用意</li>
+            <li>「お題を更新」で V/A を確認</li>
+            <li>キャンバスに円を1つ描いて「送信」</li>
+            <li>CSVは右上のリンクからダウンロード</li>
+          </ol>
+        </details>
+      </div>
+    </aside>
+  </main>
+
+  <footer><small>© 2025 Emotion × Drawing Lab</small></footer>
 
   <script>
     const canvas = document.getElementById("drawingCanvas");
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    let drawing = false;
-    let points = [];
+    let drawing = false, points = [];
+    let currentValence = null, currentArousal = null;
+    let participantId = null;
 
-    // --- 共通処理（座標取得） ---
-    function getPos(x, y) {
+    // --- PC描画 ---
+    function getPos(e) {
       const r = canvas.getBoundingClientRect();
-      return { x: x - r.left, y: y - r.top };
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
-
-    // --- マウス対応 ---
     canvas.addEventListener("mousedown", (e) => {
       drawing = true; points = [];
       ctx.beginPath();
-      const p = getPos(e.clientX, e.clientY);
-      ctx.moveTo(p.x, p.y);
-      points.push(p);
+      const p = getPos(e); ctx.moveTo(p.x, p.y); points.push(p);
     });
     canvas.addEventListener("mousemove", (e) => {
       if (!drawing) return;
-      const p = getPos(e.clientX, e.clientY);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-      points.push(p);
+      const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); points.push(p);
     });
     canvas.addEventListener("mouseup", () => drawing = false);
     canvas.addEventListener("mouseleave", () => drawing = false);
 
-    // --- タッチ対応 ---
+    // --- スマホ描画 ---
+    function getTouchPos(t) {
+      const r = canvas.getBoundingClientRect();
+      return { x: t.clientX - r.left, y: t.clientY - r.top };
+    }
     canvas.addEventListener("touchstart", (e) => {
       e.preventDefault();
       drawing = true; points = [];
       ctx.beginPath();
-      const t = e.touches[0];
-      const p = getPos(t.clientX, t.clientY);
-      ctx.moveTo(p.x, p.y);
-      points.push(p);
+      const p = getTouchPos(e.touches[0]);
+      ctx.moveTo(p.x, p.y); points.push(p);
     });
     canvas.addEventListener("touchmove", (e) => {
       e.preventDefault();
       if (!drawing) return;
-      const t = e.touches[0];
-      const p = getPos(t.clientX, t.clientY);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-      points.push(p);
+      const p = getTouchPos(e.touches[0]);
+      ctx.lineTo(p.x, p.y); ctx.stroke(); points.push(p);
     });
-    canvas.addEventListener("touchend", () => { drawing = false; });
+    canvas.addEventListener("touchend", () => drawing = false);
 
-    // --- 消去 ---
-    document.getElementById("clearBtn").addEventListener("click", () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      points = [];
-    });
-
-    // --- 送信（ダミー処理）---
-    document.getElementById("submitBtn").addEventListener("click", () => {
-      if (points.length < 3) {
-        alert("もっとぐるぐるを描いてください！");
-        return;
-      }
-      alert("送信しました！（ここでサーバにPOSTします）");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      points = [];
-    });
   </script>
 </body>
 </html>
