@@ -3,60 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <title>心のぐるぐる描画</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
-    body { font-family: sans-serif; background:#f2f2f2; margin:0; padding:24px; text-align:center; color:#333; }
-    .card { background:#fff; max-width:840px; margin:0 auto; padding:20px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.08); }
-    h1 { margin: 0 0 8px; font-size: 22px; }
-    .row { margin: 10px 0; }
-    input[type="text"] { padding:8px 10px; border:1px solid #ddd; border-radius:8px; width: 240px; }
-    button { padding:10px 16px; font-size:14px; border:0; border-radius:8px; cursor:pointer; }
+    body {
+      font-family: sans-serif;
+      background:#f2f2f2;
+      margin:0;
+      padding:24px;
+      text-align:center;
+      color:#333;
+    }
+    .card {
+      background:#fff;
+      max-width:840px;
+      margin:0 auto;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.08);
+    }
+    canvas {
+      display:block;
+      margin:10px auto;
+      border:2px solid #000;
+      background:#fff;
+      width:90vw;
+      max-width:500px;
+      height:90vw;
+      max-height:500px;
+      touch-action:none;   /* ← スマホでのスクロール無効化 */
+    }
+    button {
+      padding:10px 16px;
+      font-size:14px;
+      border:0;
+      border-radius:8px;
+      cursor:pointer;
+    }
     button.primary { background:#2563eb; color:#fff; }
     button.secondary { background:#e5e7eb; }
-    #task { display:flex; gap:16px; justify-content:center; align-items:center; flex-wrap:wrap; margin:12px 0 10px; }
-    .pill { border:1px solid #ddd; border-radius:999px; padding:8px 14px; background:#fafafa; }
-    .desc { color:#555; font-size:13px; margin-left:6px; }
-    canvas { display:block; margin:10px auto; border:2px solid #000; background:#fff; width:500px; height:500px; touch-action:none; }
-    .small { color:#666; font-size:12px; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>あなたの心のぐるぐるを描いてください</h1>
-    <p class="small">※ 参加者IDは必須です．同じIDで複数回の提出ができます．</p>
-
-    <!-- 参加者ID -->
-    <div class="row">
-      <input id="participantId" type="text" placeholder="参加者ID（英数字：6〜16桁）" />
-      <button id="issueBtn" class="secondary">IDを発行</button>
-      <button id="setIdBtn" class="primary">IDを設定</button>
-    </div>
-    <div class="row small" id="idStatus">未設定</div>
-
-    <!-- お題 -->
-    <div id="task">
-      <div class="pill">
-        <strong>Valence:</strong> <span id="valence">--</span>
-        <span id="valence-desc" class="desc"></span>
-      </div>
-      <div class="pill">
-        <strong>Arousal:</strong> <span id="arousal">--</span>
-        <span id="arousal-desc" class="desc"></span>
-      </div>
-    </div>
 
     <!-- 正方形キャンバス -->
     <canvas id="drawingCanvas" width="500" height="500"></canvas>
 
     <div class="row">
-      <button id="newTaskBtn" class="secondary">お題を更新</button>
       <button id="clearBtn" class="secondary">消去</button>
       <button id="submitBtn" class="primary">送信</button>
     </div>
-
-    <p class="small">
-      ※ お題の値に近いイメージで，線の勢い・大きさ・密度などを工夫して「円」を1つ描いてください．<br/>
-      Valence：気分（不快 ← 0 → 快），Arousal：活動度（静か ← 0 → 活発）．値は −10 〜 +10（21段階）．
-    </p>
   </div>
 
   <script>
@@ -64,142 +61,68 @@
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     let drawing = false;
     let points = [];
-    let currentValence = null;
-    let currentArousal = null;
-    let participantId = null;
 
-    // --- 共通関数 ---
-    function validId(id) {
-      return /^[A-Za-z0-9]{6,16}$/.test(id);
-    }
-
-    function getPosMouse(e) {
+    // --- 共通処理（座標取得） ---
+    function getPos(x, y) {
       const r = canvas.getBoundingClientRect();
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
+      return { x: x - r.left, y: y - r.top };
     }
 
-    function getPosTouch(e) {
-      const r = canvas.getBoundingClientRect();
-      const t = e.touches[0];
-      return { x: t.clientX - r.left, y: t.clientY - r.top };
-    }
-
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      points = [];
-    }
-
-    // --- 描画イベント（マウス） ---
+    // --- マウス対応 ---
     canvas.addEventListener("mousedown", (e) => {
       drawing = true; points = [];
       ctx.beginPath();
-      const p = getPosMouse(e);
+      const p = getPos(e.clientX, e.clientY);
       ctx.moveTo(p.x, p.y);
       points.push(p);
     });
     canvas.addEventListener("mousemove", (e) => {
       if (!drawing) return;
-      const p = getPosMouse(e);
+      const p = getPos(e.clientX, e.clientY);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
       points.push(p);
     });
-    canvas.addEventListener("mouseup", () => { drawing = false; });
-    canvas.addEventListener("mouseleave", () => { drawing = false; });
+    canvas.addEventListener("mouseup", () => drawing = false);
+    canvas.addEventListener("mouseleave", () => drawing = false);
 
-    // --- 描画イベント（タッチ） ---
+    // --- タッチ対応 ---
     canvas.addEventListener("touchstart", (e) => {
       e.preventDefault();
       drawing = true; points = [];
       ctx.beginPath();
-      const p = getPosTouch(e);
+      const t = e.touches[0];
+      const p = getPos(t.clientX, t.clientY);
       ctx.moveTo(p.x, p.y);
       points.push(p);
     });
     canvas.addEventListener("touchmove", (e) => {
       e.preventDefault();
       if (!drawing) return;
-      const p = getPosTouch(e);
+      const t = e.touches[0];
+      const p = getPos(t.clientX, t.clientY);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
       points.push(p);
     });
     canvas.addEventListener("touchend", () => { drawing = false; });
-    canvas.addEventListener("touchcancel", () => { drawing = false; });
 
-    // --- ID関連 ---
-    function updateIdStatus() {
-      const el = document.getElementById("idStatus");
-      el.textContent = participantId ? `ID: ${participantId}（設定済み）` : "未設定";
-    }
-    document.getElementById("issueBtn").addEventListener("click", async () => {
-      const res = await fetch("/issue_id");
-      const data = await res.json();
-      participantId = data.id;
-      localStorage.setItem("participant_id", participantId);
-      document.getElementById("participantId").value = participantId;
-      updateIdStatus();
-      alert("発行したIDを必ず控えてください： " + participantId);
-    });
-    document.getElementById("setIdBtn").addEventListener("click", () => {
-      const id = document.getElementById("participantId").value.trim();
-      if (!validId(id)) { alert("英数字6〜16桁で入力してください．"); return; }
-      participantId = id;
-      localStorage.setItem("participant_id", participantId);
-      updateIdStatus();
-      alert("IDを設定しました：" + participantId);
+    // --- 消去 ---
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      points = [];
     });
 
-    // --- お題取得 ---
-    async function fetchTask() {
-      const res = await fetch("/task");
-      const data = await res.json();
-      currentValence = data.valence;
-      currentArousal = data.arousal;
-      document.getElementById("valence").textContent = currentValence;
-      document.getElementById("arousal").textContent = currentArousal;
-      document.getElementById("valence-desc").textContent = "";
-      document.getElementById("arousal-desc").textContent = "";
-    }
-    document.getElementById("newTaskBtn").addEventListener("click", async () => {
-      clearCanvas();
-      await fetchTask();
-    });
-
-    // --- 送信 ---
-    document.getElementById("submitBtn").addEventListener("click", async () => {
-      if (!participantId || !validId(participantId)) {
-        alert("参加者IDが未設定です．『IDを発行』または『IDを設定』を行ってください．");
+    // --- 送信（ダミー処理）---
+    document.getElementById("submitBtn").addEventListener("click", () => {
+      if (points.length < 3) {
+        alert("もっとぐるぐるを描いてください！");
         return;
       }
-      if (points.length < 3) { alert("もう少し円を描いてください！"); return; }
-      const res = await fetch("/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: participantId,
-          valence: currentValence,
-          arousal: currentArousal,
-          points: points
-        })
-      });
-      if (res.ok) {
-        alert("送信しました！ 同じIDで続けて提出できます．");
-        clearCanvas();
-        await fetchTask();
-      } else {
-        alert("送信に失敗しました．");
-      }
+      alert("送信しました！（ここでサーバにPOSTします）");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      points = [];
     });
-
-    // 初期化
-    const saved = localStorage.getItem("participant_id");
-    if (saved && validId(saved)) {
-      participantId = saved;
-      document.getElementById("participantId").value = participantId;
-    }
-    updateIdStatus();
-    fetchTask();
   </script>
 </body>
 </html>
