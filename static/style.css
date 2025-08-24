@@ -38,11 +38,10 @@ body{
   box-shadow:0 10px 30px rgba(37,99,235,.10);
   overflow:hidden; border:1px solid #eef2ff;
 }
-
 .head{padding:12px 16px; border-bottom:1px solid var(--border)}
 .head h2{margin:0; font-size:18px}
-
 .body{padding:16px}
+
 .small{color:var(--muted); font-size:12px}
 .dim{opacity:.85}
 
@@ -80,22 +79,17 @@ input[type="text"]:focus{
   border-color:#93c5fd; box-shadow:0 0 0 4px rgba(147,197,253,.35)
 }
 
-/* Canvas 表示 */
+/* Canvas 表示（枠はJSでも描くが、CSS側でも青枠を示す） */
 .canvas-wrap{display:grid; place-items:center; padding:12px}
 canvas{
   display:block;
   width:min(90vw,520px); height:min(90vw,520px);
   max-width:520px; max-height:520px;
-  border:2px solid var(--primary);     /* 青い外枠（CSS側の枠） */
+  border:2px solid var(--primary);
   background:#fff;
   touch-action:none; /* スクロール・ピンチ無効化 */
   border-radius:10px;
   box-shadow:0 10px 24px rgba(37,99,235,.08);
-}
-.legend{margin-top:6px}
-.legend .dot{
-  display:inline-block; width:10px; height:10px; border-radius:50%;
-  background:var(--primary); margin-right:6px
 }
 
 footer{text-align:center; padding:10px 0 30px; color:var(--muted)}

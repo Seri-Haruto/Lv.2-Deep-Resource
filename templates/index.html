@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>心のぐるぐる描画 | Emotion × Drawing Lab</title>
+  <title>心のぐるぐる描画 | Osawa Lab</title>
 
   <!-- フォント -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,16 +15,17 @@
 <body>
   <header class="container">
     <nav class="nav">
-      <div class="brand">Emotion × Drawing</div>
+      <div class="brand">Drawing ✖︎ Emotion</div>
       <div class="navlinks">
+        <a href="#about">実験の趣旨</a>
         <a href="#howto">使い方</a>
         <a class="link" href="/export" title="全件CSVをダウンロード">CSV</a>
       </div>
     </nav>
 
     <div class="hero">
-      <h1>「心のぐるぐる」を<span class="accent">可視化</span>しよう</h1>
-      <p>描線の軌跡と Valence / Arousal を同時に収集する実験ページです．</p>
+      <h1>「心のぐるぐる」を<span class="accent">表現</span>しよう</h1>
+      <p>描線の軌跡と Valence / Arousal の情報を収集する実験ページです．</p>
       <div class="toolbar">
         <button id="issueBtn" class="btn ghost">IDを発行</button>
         <button id="setIdBtn" class="btn primary">IDを設定</button>
@@ -37,11 +38,7 @@
     <section class="card drawing">
       <div class="head"><h2>Drawing Canvas</h2></div>
       <div class="canvas-wrap">
-        <!-- 正方形キャンバス -->
         <canvas id="drawingCanvas" width="500" height="500"></canvas>
-        <div class="legend small">
-          <span class="dot"></span> 青い枠＝描画エリア，薄い線＝ガイド用グリッド
-        </div>
       </div>
       <div class="body">
         <div class="actions">
@@ -83,16 +80,44 @@
           <summary>使い方</summary>
           <ol>
             <li>「IDを発行」または「IDを設定」で参加者IDを用意</li>
-            <li>「お題を更新」で V/A を確認</li>
+            <li>「お題を更新」で Valence/Arousal を確認</li>
             <li>キャンバスに円を1つ描いて「送信」</li>
-            <li>CSVは右上リンク（全件）または <code>/export?user_id=あなたのID</code> で個別DL</li>
           </ol>
         </details>
       </div>
     </aside>
   </main>
 
-  <footer><small>© 2025 Emotion × Drawing Lab</small></footer>
+  <!-- 実験の趣旨と Valence/Arousal の説明 -->
+  <section id="about" class="container card">
+    <div class="head"><h2>この実験について</h2></div>
+    <div class="body">
+      <p>
+        本実験は，<strong>感情の状態（Valence / Arousal）</strong>と<strong>描画表現（円の描き方）</strong>の関係を考察するための研究です．
+        システムから提示される値に「合う」と感じる円を1つ描いてください．描画の形状・大きさ・密度・筆圧（線の勢い）などは自由に工夫して構いません．
+      </p>
+      <h3>Valence（快–不快）</h3>
+      <ul>
+        <li><strong>-10</strong>：強い不快（例：怒り・悲しみ・嫌悪）</li>
+        <li><strong>  0</strong>：中立（例：無関心・平静）</li>
+        <li><strong>+10</strong>：強い快（例：喜び・安心・満足）</li>
+      </ul>
+      <h3>Arousal（覚醒–鎮静）</h3>
+      <ul>
+        <li><strong>-10</strong>：鎮静（例：眠気・低活動・落ち着き）</li>
+        <li><strong>  0</strong>：通常（例：落ち着いた集中）</li>
+        <li><strong>+10</strong>：活発（例：興奮・緊張・高揚）</li>
+      </ul>
+      <p>
+        収集したデータは，描線と感情の対応関係を統計的・機械学習的に分析するために使用されます．
+      </p>
+      <p class="small dim">
+        参加は任意であり，提出されたデータは研究目的以外には使用しません．IDは匿名化のために用いられ，個人を特定する情報は含みません．
+      </p>
+    </div>
+  </section>
+
+  <footer><small>© 2025 Osawa Lab</small></footer>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

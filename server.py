@@ -1,15 +1,6 @@
 # coding: utf-8
 from flask import Flask, request, render_template, jsonify, send_file
-import os
-import sqlite3
-import datetime
-import json
-import csv
-import io
-import random
-import re
-import secrets
-import string
+import os, sqlite3, datetime, json, csv, io, random, re, secrets, string
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'drawing_emotion.db')
@@ -18,12 +9,11 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # ====== ID 発行・検証 ======
 ID_REGEX = re.compile(r'^[A-Za-z0-9]{6,16}$')
-
 def gen_id(length=8):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-# ====== DB 初期化 ======
+# ====== DB ======
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -35,8 +25,7 @@ def init_db():
                     arousal INTEGER,
                     points TEXT
                 )''')
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
 
 # ====== UI ======
 @app.route('/')
@@ -50,16 +39,12 @@ def healthz():
 # ====== お題API ======
 @app.route('/task', methods=['GET'])
 def task():
-    # -10 〜 +10 の整数
-    valence = random.randint(-10, 10)
-    arousal = random.randint(-10, 10)
-    return jsonify({"valence": valence, "arousal": arousal})
+    return jsonify({"valence": random.randint(-10, 10), "arousal": random.randint(-10, 10)})
 
 # ====== 参加者ID発行 ======
 @app.route('/issue_id', methods=['GET'])
 def issue_id():
-    new_id = gen_id(8)
-    return jsonify({"id": new_id})
+    return jsonify({"id": gen_id(8)})
 
 # ====== 提出 ======
 @app.route('/submit', methods=['POST'])
@@ -67,75 +52,54 @@ def submit():
     try:
         data = request.get_json(force=True)
     except Exception:
-        return jsonify({"status": "error", "message": "invalid json"}), 400
+        return jsonify({"status":"error","message":"invalid json"}), 400
 
     timestamp = datetime.datetime.now().isoformat(timespec='seconds')
-
     user_id = (data.get('user_id') or '').strip()
     if not ID_REGEX.match(user_id):
-        return jsonify({"status": "error", "message": "invalid user_id (6-16 alphanumeric)"}), 400
-
+        return jsonify({"status":"error","message":"invalid user_id (6-16 alphanumeric)"}), 400
     try:
-        valence = int(data['valence'])
-        arousal = int(data['arousal'])
+        valence = int(data['valence']); arousal = int(data['arousal'])
     except (KeyError, ValueError, TypeError):
-        return jsonify({"status": "error", "message": "invalid valence/arousal"}), 400
-
+        return jsonify({"status":"error","message":"invalid valence/arousal"}), 400
     points = data.get('points')
     if not isinstance(points, list) or len(points) < 3:
-        return jsonify({"status": "error", "message": "points missing or too short"}), 400
+        return jsonify({"status":"error","message":"points missing or too short"}), 400
 
-    points_json = json.dumps(points, ensure_ascii=False, separators=(',', ':'))
-
+    points_json = json.dumps(points, ensure_ascii=False, separators=(',',':'))
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute(
-            'INSERT INTO drawings (timestamp, user_id, valence, arousal, points) VALUES (?, ?, ?, ?, ?)',
-            (timestamp, user_id, valence, arousal, points_json)
-        )
+        c.execute('INSERT INTO drawings (timestamp,user_id,valence,arousal,points) VALUES (?,?,?,?,?)',
+                  (timestamp, user_id, valence, arousal, points_json))
         conn.commit()
     except sqlite3.Error as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status":"error","message":str(e)}), 500
     finally:
         conn.close()
-
-    return jsonify({'status': 'success'})
+    return jsonify({'status':'success'})
 
 # ====== CSVエクスポート ======
 @app.route('/export', methods=['GET'])
 def export_csv():
-    """ 全件 or ?user_id=XXXX で絞り込み """
-    user_id = request.args.get('user_id', '', type=str).strip()
-
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
+    user_id = request.args.get('user_id','',type=str).strip()
+    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
     if user_id:
-        c.execute('SELECT id, timestamp, user_id, valence, arousal, points FROM drawings WHERE user_id = ? ORDER BY id ASC', (user_id,))
+        c.execute('SELECT id,timestamp,user_id,valence,arousal,points FROM drawings WHERE user_id=? ORDER BY id ASC',(user_id,))
+        name = f'drawing_emotion_{user_id}.csv'
     else:
-        c.execute('SELECT id, timestamp, user_id, valence, arousal, points FROM drawings ORDER BY id ASC')
+        c.execute('SELECT id,timestamp,user_id,valence,arousal,points FROM drawings ORDER BY id ASC')
+        name = 'drawing_emotion_data.csv'
+    rows = c.fetchall(); conn.close()
 
-    rows = c.fetchall()
-    conn.close()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['id', 'timestamp', 'user_id', 'valence', 'arousal', 'points'])
-    for row in rows:
-        writer.writerow(row)
-
-    output.seek(0)
-    name = 'drawing_emotion_data.csv' if not user_id else f'drawing_emotion_{user_id}.csv'
-    return send_file(
-        io.BytesIO(output.getvalue().encode('utf-8-sig')),
-        mimetype='text/csv',
-        as_attachment=True,
-        download_name=name
-    )
+    out = io.StringIO(); w = csv.writer(out)
+    w.writerow(['id','timestamp','user_id','valence','arousal','points'])
+    for r in rows: w.writerow(r)
+    out.seek(0)
+    return send_file(io.BytesIO(out.getvalue().encode('utf-8-sig')),
+                     mimetype='text/csv', as_attachment=True, download_name=name)
 
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get("PORT", 10000))
-    # Render等で公開する場合は 0.0.0.0 にバインド
     app.run(host='0.0.0.0', port=port, debug=False)

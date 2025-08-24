@@ -17,12 +17,14 @@
   on("clearBtn","click", () => clearCanvas(true));
   on("submitBtn","click", submitDrawing);
 
+  // State
   let drawing = false;
   let points = [];
   let participantId = null;
   let currentValence = null;
   let currentArousal = null;
 
+  // Utils
   const validId = id => /^[A-Za-z0-9]{6,16}$/.test(id);
   const updateIdStatus = () => elIdStat.textContent = participantId ? `ID: ${participantId}（設定済み）` : '未設定';
 
@@ -31,17 +33,16 @@
     v <= -3 ? "やや不快"  :
     v <=  3 ? "中立"      :
     v <=  7 ? "やや快"    : "とても快";
+
   const arousalDesc = a =>
     a <= -7 ? "とても静か / 眠そう" :
     a <= -3 ? "やや静か"           :
     a <=  3 ? "普通"               :
     a <=  7 ? "やや活発"           : "とても活発 / 興奮";
 
-  // ===== フレーム（外枠のみ） =====
+  // 青い外枠のみ（キャンバス内の視覚ガイド）
   function drawDecor() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 青い外枠のみ
     ctx.save();
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#2563eb';
@@ -49,7 +50,7 @@
     ctx.restore();
   }
 
-  // ===== API =====
+  // API
   async function issueId() {
     try {
       const res = await fetch("/issue_id");
@@ -64,7 +65,6 @@
       alert("ID発行に失敗しました．接続を確認してください．");
     }
   }
-
   function setId() {
     const id = (elIdInput.value || "").trim();
     if (!validId(id)) { alert("英数字6〜16桁で入力してください．"); return; }
@@ -73,7 +73,6 @@
     updateIdStatus();
     alert("IDを設定しました．");
   }
-
   async function fetchTask() {
     const res = await fetch("/task");
     if (!res.ok) throw new Error("task failed");
@@ -85,14 +84,9 @@
     elValDesc.textContent = `（${valenceDesc(currentValence)}）`;
     elAroDesc.textContent = `（${arousalDesc(currentArousal)}）`;
   }
-
   async function submitDrawing() {
-    if (!participantId || !validId(participantId)) {
-      alert("参加者IDが未設定です．"); return;
-    }
-    if (currentValence === null || currentArousal === null) {
-      alert("お題が未取得です．"); return;
-    }
+    if (!participantId || !validId(participantId)) { alert("参加者IDが未設定です．"); return; }
+    if (currentValence === null || currentArousal === null) { alert("お題が未取得です．"); return; }
     if (points.length < 3) { alert("もう少し円を描いてください！"); return; }
 
     const res = await fetch("/submit", {
@@ -106,7 +100,7 @@
     try { await fetchTask(); } catch {}
   }
 
-  // ===== Canvas =====
+  // Canvas
   function getMousePos(e) {
     const r = canvas.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
@@ -122,6 +116,7 @@
     if (withDecor) drawDecor();
   }
 
+  // Mouse
   canvas.addEventListener("mousedown", e => {
     drawing = true; points = [];
     ctx.beginPath();
@@ -134,6 +129,7 @@
   canvas.addEventListener("mouseup", () => drawing = false);
   canvas.addEventListener("mouseleave", () => drawing = false);
 
+  // Touch
   canvas.addEventListener("touchstart", e => {
     e.preventDefault();
     drawing = true; points = [];
@@ -147,8 +143,9 @@
   }, { passive:false });
   canvas.addEventListener("touchend", () => { drawing = false; });
 
-  // ===== Init =====
+  // Init
   (async function init(){
+    // 既存 or URLクエリのIDを採用。無ければ自動発行
     const params = new URLSearchParams(location.search);
     const qid = params.get("id");
     const saved = localStorage.getItem("participant_id");
@@ -162,8 +159,9 @@
     updateIdStatus();
 
     drawDecor();
-    try { await fetchTask(); } catch {}
+    try { await fetchTask(); } catch { alert("お題の取得に失敗しました．"); }
 
+    // 画面回転/サイズ変更で枠再描画（ユーザ描画は消さない）
     window.addEventListener('orientationchange', ()=> drawDecor());
     window.addEventListener('resize', ()=> drawDecor());
   })();
