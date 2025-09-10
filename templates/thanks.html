@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ありがとうございました｜心のぐるぐる描画</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <main class="container container--narrow">
+    <section class="card center-card">
+      <div class="head"><h2>ご協力ありがとうございました</h2></div>
+      <div class="body" style="text-align:center;">
+        <p>全10回の提出が完了しました。研究にご協力いただきありがとうございます。</p>
+        <div id="finalId" class="badge" style="display:none; margin:10px 0;"></div>
+        <p class="small dim">学習着手前の撤回をご希望の場合は，控えた参加者IDをご提示ください。
+        <p class="small"><a class="link" href="/withdraw">撤回申請フォームへ</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="container container--narrow"><small>© 2025 Osawa Lab</small></footer>
+
+  <script>
+    const el = document.getElementById('finalId');
+    const pid = localStorage.getItem('participant_id');
+    if (pid) {
+      el.textContent = `参加者ID：${pid}`;
+      el.style.display = 'inline-block';
+    }
+  </script>
+</body>
+</html>
