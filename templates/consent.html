@@ -22,7 +22,7 @@
   </header>
 
   <main class="container container--narrow stack-lg">
-    <!-- 概要（要点ハイライト） -->
+    <!-- 概要 -->
     <section class="card">
       <div class="head"><h2>研究の概要</h2></div>
       <div class="body prose">
@@ -32,64 +32,51 @@
           将来的に<strong>描線から情動を推定する機械学習モデル</strong>の構築を目指します。
         </p>
 
-        <ul class="highlight-list">
-          <li><span class="hl-ico" aria-hidden="true">✓</span> 負担の小さい描画タスクで情動の含意を探ります。</li>
-          <li><span class="hl-ico" aria-hidden="true">✓</span> 収集データは機械学習（回帰・分類）に利用します。</li>
-          <li><span class="hl-ico" aria-hidden="true">✓</span> <strong>個人を特定する情報は収集しません</strong>。</li>
+        <ul>
+          <li>円を描画していただくことで心情を予測します．</li>
+          <li>収集データは機械学習（回帰・分類）に利用します．</li>
+          <li><strong>個人を特定する情報は収集しません</strong>．</li>
         </ul>
 
-        <div class="callout">
-          <strong>収集するデータ</strong>
-          <div class="data-badges">
-            <span class="badge">描線座標列</span>
-            <span class="badge">Valence/Arousal</span>
-            <span class="badge">試行番号</span>
-            <span class="badge">提出時刻</span>
-            <span class="badge">性別</span>
-            <span class="badge">年齢（年代）</span>
-            <span class="badge">利き手</span>
-            <span class="badge">端末区分</span>
-          </div>
-          <p class="small dim" style="margin-top:4px;">
-            研究目的以外には利用しません。成果は学会等で公開される場合がありますが，個人が特定されることはありません。
-          </p>
-        </div>
+        <p class="small dim" style="margin-top:4px;">
+          収集する主な情報：描線座標列，Valence/Arousal，試行番号，提出時刻，性別，年齢（年代），利き手，端末区分．<br>
+          研究目的以外には利用しません．成果は学会等で公開される場合がありますが，個人が特定されることはありません．
+        </p>
       </div>
     </section>
 
-    <!-- 実験方法（見やすい箇条書き） -->
+    <!-- 実験方法 -->
     <section class="card">
       <div class="head"><h2>実験方法</h2></div>
       <div class="body prose">
         <ol>
-          <li>各試行で<strong>Valence/Arousal</strong>の値が提示されます。</li>
-          <li>値のイメージに合うように，キャンバスに<strong>一筆で「円」を1つ</strong>描いてください。<br>大きさ・密度・勢い（速さ）などを工夫してください。</li>
-          <li><strong>送信</strong>ボタンで1回分として記録されます。全<strong>10回</strong>行います。</li>
+          <li>各試行で<strong>Valence/Arousal</strong>の値が提示されます．</li>
+          <li>値のイメージに合うように，キャンバスに<strong>一筆で「円」を1つ</strong>描いてください（大きさ・密度・勢いなどを工夫）．</li>
+          <li><strong>送信</strong>ボタンで1回分として記録します．全<strong>10回</strong>行います．</li>
         </ol>
-        <p class="small dim">※ 文字や記号は書き込まないでください（円の描線のみ）。</p>
+        <p class="small dim">※ 文字や記号は書き込まないでください（円の描線のみ）．</p>
       </div>
     </section>
 
-    <!-- 同意（コールアウト＋スティッキーCTA） -->
+    <!-- 同意（色枠なしでシンプルに） -->
     <section class="card">
       <div class="head"><h2>同意</h2></div>
       <div class="body prose">
-          <p>
-            内容に同意いただける場合，チェックのうえ「同意して次へ」を押してください。
-            収集データは<strong>機械学習に利用</strong>されます。学習開始後は撤回ができない場合があります。
-            学習着手前の撤回には<strong>参加者ID</strong>が必要です。
-          </p>
-        </div>
+        <p>
+          内容に同意いただける場合，チェックのうえ「同意して次へ」を押してください．
+          収集データは<strong>機械学習に利用</strong>されます．学習開始後は撤回できない場合があります．
+          学習着手前の撤回には<strong>参加者ID</strong>が必要です．
+        </p>
 
         <label class="consent-check">
           <input type="checkbox" id="agreeChk" aria-describedby="consentError" />
           <span>研究目的・データの利用内容に同意します</span>
         </label>
         <div id="consentError" class="error-msg" role="alert" aria-live="polite">
-          同意にチェックを入れてください。
+          同意にチェックを入れてください．
         </div>
 
-        <div class="actions center-actions sticky-cta">
+        <div class="actions center-actions" style="margin-top:12px;">
           <button id="toProfileBtn" class="btn primary" disabled>同意して次へ</button>
         </div>
       </div>
