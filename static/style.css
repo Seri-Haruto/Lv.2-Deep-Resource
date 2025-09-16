@@ -48,7 +48,7 @@ body{
 .stack-lg > * + *{ margin-top:18px; }
 
 /* 読みやすい本文 */
-.prose p{margin:0 0 12px; font-size:15.5px; line-height:1.85}
+.prose p{margin:0 0 10px; font-size:15.5px; line-height:1.85}
 .prose ul, .prose ol{margin:0 0 12px 0; padding-left:1.2rem}
 .prose li{margin:6px 0}
 
@@ -159,3 +159,103 @@ canvas{
   padding:12px 16px; border-bottom:1px solid var(--border)}
 .modal__body{padding:16px}
 .modal__close{border:none; background:transparent; font-size:20px; cursor:pointer; line-height:1}
+
+/* ===== 可読性 & アクセシビリティの底上げ ===== */
+
+/* 流体タイポグラフィ（画面幅に応じて自然に拡縮） */
+:root{
+  --fs-sm: clamp(12px, 0.85rem, 14px);
+  --fs-body: clamp(15px, 1rem + 0.25vw, 17px);
+  --fs-h2: clamp(18px, 1.05rem + 0.6vw, 22px);
+  --fs-h1: clamp(24px, 1.2rem + 1.2vw, 32px);
+}
+body{ font-size: var(--fs-body); }
+.hero h1{ font-size: var(--fs-h1); }
+.head h2{ font-size: var(--fs-h2); }
+.small{ font-size: var(--fs-sm); }
+
+/* カード内の行間＆余白を少し広げる */
+.prose p{ line-height: 1.95; }
+.body{ padding: clamp(16px, 2.5vw, 22px); }
+.head{ padding: clamp(12px, 2vw, 16px) clamp(16px, 2.5vw, 20px); }
+
+/* コンテナの左右余白（モバイルで窮屈にならないよう微調整） */
+@media (max-width: 560px){
+  .container{ padding: 12px; }
+  .container--narrow{ padding: 12px; }
+}
+
+/* クリック/タップしやすさ：高さ＆フォーカス可視性の統一 */
+.btn, select, input[type="text"], textarea{
+  min-height: 44px;
+}
+a:focus-visible, button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline: 3px solid rgba(37,99,235,.35);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* ボタンのラベルが折り返す時の見栄え */
+.btn{ padding: 12px 16px; line-height: 1.3; }
+
+/* エラーの視認性を強化（ピクト追加＆余白） */
+.error-msg{ display: block; }
+.error-msg::before{
+  content: "⚠︎";
+  font-weight: 700;
+  margin-right: 6px;
+}
+.error-summary ul{ margin: 6px 0 0 18px; }
+
+/* stickyトップバーの背景・罫線で重なりを見やすく */
+.topbar.sticky{
+  background: rgba(255,255,255,.9);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,.03);
+}
+
+/* 同意ページなどで使う装飾（ある場合に効く） */
+.prose .lead{ font-size: clamp(16px, 1rem + 0.3vw, 18px); line-height: 2; }
+.highlight-list{ list-style: none; padding-left: 0; margin: 12px 0; }
+.highlight-list li{ display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; }
+.hl-ico{
+  display: inline-grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 999px;
+  background: var(--primary-weak); color:#1e3a8a; font-weight: 800; font-size: 12px;
+}
+.callout{
+  border:1px solid #e5e7eb; border-radius:12px; padding:12px; background:#fafafa;
+}
+.callout--info{
+  border-color:#c7d2fe; background: var(--primary-weak); color:#1e3a8a;
+}
+.sticky-cta{
+  position: sticky; bottom: 12px; z-index: 50;
+  background: rgba(255,255,255,.92); backdrop-filter: saturate(1.1) blur(6px);
+  border: 1px solid var(--border); border-radius: 14px;
+  padding: 10px; margin-top: 14px;
+  box-shadow: 0 10px 24px rgba(37,99,235,.10);
+}
+
+/* 進行ステップ（consentで利用していれば効く） */
+.steps{
+  display:flex; gap:10px; justify-content:center; align-items:center; margin-top:6px;
+}
+.step{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:10px 12px; border:1px solid var(--border); background:#fff; border-radius:12px;
+  min-width:80px;
+}
+.step span{
+  display:inline-grid; place-items:center; width:28px; height:28px; border-radius:999px;
+  background:#e5e7eb; font-weight:800;
+}
+.step small{ color:var(--muted); font-size:12px; }
+.step--active{ border-color:#c7d2fe; box-shadow:0 6px 16px rgba(37,99,235,.12); }
+.step--active span{ background: var(--primary); color:#fff; }
+
+/* キャンバス：超小さい画面での一段縮小（値と同時表示しやすく） */
+@media (max-width: 380px){
+  canvas{ width:min(86vw, 320px); height:min(86vw, 320px); max-width:320px; max-height:320px; }
+}
