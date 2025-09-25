@@ -296,3 +296,50 @@ body { line-height: 1.9; }
   border:1px solid #c7d2fe;
 }
 .step--active { color: var(--text); }
+
+
+/* アイコンのみボタン */
+.icon-only {
+  padding: 10px;           /* 正方形に近い当たり判定 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;          /* 余白を詰める */
+}
+
+.icon-only svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 説明書ボタン行の揃え */
+.inline-dl{
+  display:flex;
+  align-items:center;      /* 垂直中央 */
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+/* この行のボタンだけ高さを固定して揃える（他のボタンは影響なし） */
+.inline-dl .btn{
+  --btn-h: 44px;           /* タップしやすい最小推奨サイズ */
+  height: var(--btn-h);
+  padding: 0 14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  line-height:1;           /* 余白のブレ防止 */
+}
+
+/* アイコンだけのボタンは正方形に */
+.inline-dl .btn.icon-only{
+  width: var(--btn-h);
+  padding: 0;              /* 内側余白は不要 */
+}
+
+/* SVGサイズを明示（綺麗に中央） */
+.inline-dl .btn.icon-only svg{
+  width: 20px;
+  height: 20px;
+}

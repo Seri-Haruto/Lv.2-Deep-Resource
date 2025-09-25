@@ -31,13 +31,11 @@
           提示される<strong>Valence（快−不快）/ Arousal（覚醒−鎮静）</strong>の値との関係を分析し，
           将来的に<strong>描線から情動を推定する機械学習モデル</strong>の構築を目指します。
         </p>
-
         <ul>
           <li>円を描画していただくことで心情を予測します．</li>
           <li>収集データは機械学習（回帰・分類）に利用します．</li>
           <li><strong>個人を特定する情報は収集しません</strong>．</li>
         </ul>
-
         <p class="small dim" style="margin-top:4px;">
           収集する主な情報：描線座標列，Valence/Arousal，試行番号，提出時刻，性別，年齢（年代），利き手，端末区分．<br>
           研究目的以外には利用しません．成果は学会等で公開される場合がありますが，個人が特定されることはありません．
@@ -58,27 +56,66 @@
       </div>
     </section>
 
-    <!-- 同意（色枠なしでシンプルに） -->
+    <!-- 同意（必須と任意を分離） -->
     <section class="card">
       <div class="head"><h2>同意</h2></div>
       <div class="body prose">
         <p>
-          内容に同意いただける場合，チェックのうえ「同意して次へ」を押してください．
-          収集データは<strong>機械学習に利用</strong>されます．学習開始後は撤回できない場合があります．
-          学習着手前の撤回には<strong>参加者ID</strong>が必要です．
+          以下の 2 項目についてご確認ください。<br>
+          1 は<strong>必須</strong>、2 は<strong>任意</strong>です。任意は未チェックでも次へ進めます。
+          以下は実験の説明書です。必ずお読みください。
         </p>
 
-        <label class="consent-check">
-          <input type="checkbox" id="agreeChk" aria-describedby="consentError" />
-          <span>研究目的・データの利用内容に同意します</span>
-        </label>
-        <div id="consentError" class="error-msg" role="alert" aria-live="polite">
-          同意にチェックを入れてください．
+                <!-- ▼ 説明書リンク & 埋め込みプレビュー -->
+        <!-- 説明書＋ダウンロードを並べる場所だけラップ -->
+        <div class="inline-dl">
+          <a class="btn ghost" href="https://drive.google.com/file/d/1yOk6OU6YSIP7t96pCT56zxwUetb-LMFf/view?usp=sharing" target="_blank" rel="noopener">
+            研究協力者各位への説明書
+          </a>
+
+          <a class="btn ghost icon-only"
+            href="https://drive.google.com/uc?export=download&id=1yOk6OU6YSIP7t96pCT56zxwUetb-LMFf"
+            aria-label="PDFをダウンロード" title="PDFをダウンロード">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor"
+                d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4A1 1 0 1 1 8.707 10.293L11 12.586V4a1 1 0 0 1 1-1zm-7 14a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z"/>
+            </svg>
+          </a>
         </div>
 
-        <div class="actions center-actions" style="margin-top:12px;">
-          <button id="toProfileBtn" class="btn primary" disabled>同意して次へ</button>
+
+        <div id="docEmbed" class="doc-embed" hidden>
+          <iframe
+            src="https://drive.google.com/file/d/1yOk6OU6YSIP7t96pCT56zxwUetb-LMFf/preview"
+            allow="autoplay"
+            title="研究協力者各位への説明書（PDF）"></iframe>
         </div>
+        <!-- ▲ 説明書リンク & 埋め込みプレビュー -->
+
+
+        <!-- ▼フォーム送信ベース（JSが無くても動く） -->
+        <form id="consentForm" action="/profile" method="get">
+          <!-- 1) 実験参加の同意（必須） -->
+          <label class="consent-check">
+            <input type="checkbox" id="agreeParticipate" name="agree_participate" required aria-describedby="consentError" />
+            <span>１　この実験に参加することに同意する（必須）</span>
+          </label>
+
+          <!-- 2) 匿名データの将来の別研究への利用（任意） -->
+          <label class="consent-check">
+            <input type="checkbox" id="agreeReuse" name="agree_reuse" />
+            <span>２　匿名化した実験データを後日別の学術研究にも利用することに同意する（任意）</span>
+          </label>
+
+          <div id="consentError" class="error-msg" role="alert" aria-live="polite" style="display:none">
+            必須の同意（１）にチェックを入れてください．
+          </div>
+
+          <div class="actions center-actions" style="margin-top:12px;">
+            <button type="submit" id="toProfileBtn" class="btn primary" disabled>同意して次へ</button>
+          </div>
+        </form>
+        <!-- ▲フォーム -->
       </div>
     </section>
 

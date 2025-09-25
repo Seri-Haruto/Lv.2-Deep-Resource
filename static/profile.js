@@ -1,3 +1,29 @@
+
+(() => {
+  const q = new URLSearchParams(location.search);
+
+  // consent.js の GET 遷移で付くクエリを受け取りローカル保存（JSが遅れても復元）
+  if (q.has("agree_participate")) {
+    localStorage.setItem("consent_participate", "true");
+    localStorage.setItem("consented", "true");         // 互換キー
+    if (q.has("agree_reuse")) localStorage.setItem("consent_reuse", "true");
+  }
+  if (!localStorage.getItem("consent_version")) {
+    localStorage.setItem("consent_version", "v1.1");
+  }
+
+  // どちらのキーでも OK にする
+  const hasConsent =
+    localStorage.getItem("consented") === "true" ||
+    localStorage.getItem("consent_participate") === "true";
+
+  if (!hasConsent) {
+    // 戻す場合は replace で履歴に残さない
+    location.replace("/consent");
+    return;
+  }
+})();
+
 (() => {
   const issuedId = document.getElementById("issuedId");
   const saveBtn  = document.getElementById("saveProfileBtn");
