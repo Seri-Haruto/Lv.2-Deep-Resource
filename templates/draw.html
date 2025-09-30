@@ -69,11 +69,36 @@
       </div>
       <div class="modal__body prose">
         <ol>
-          <li>各試行で<strong>Valence/Arousal</strong>の値が提示されます。</li>
-          <li>値のイメージに合うよう、キャンバスに<strong>一筆で「円」を1つ</strong>描いてください。<br>大きさ・密度・勢い（速さ）などを工夫してください。</li>
+          <li>各試行で<strong>Valence（快−不快）/Arousal（覚醒−鎮静）</strong>の値が提示されます。</li>
+          <li>値のイメージに合うよう，キャンバスに<strong>一筆で「円」を1つ</strong>描いてください。<br>大きさ・密度・勢い（速さ）などを工夫してください。</li>
           <li><strong>送信</strong>で1回分を記録します。全<strong>10回</strong>行います。</li>
         </ol>
         <p class="small dim">※ 文字や記号の書き込みは避けてください（円の描線のみ）。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ 値に集中して想像してもらう 5秒オーバーレイ -->
+  <div class="modal" id="focusModal" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="focusTitle">
+      <div class="modal__body" style="text-align:center">
+        <h3 id="focusTitle" style="margin-top:6px;">お題を想像する時間</h3>
+        <p class="dim" style="margin:6px 0 10px;">以下の値の状態を<strong>5秒間</strong>，想像してください。</p>
+
+        <div class="pillwrap" style="justify-content:center; margin-bottom:10px;">
+          <div class="pill pill--blue">
+            <strong>Valence（快−不快）:</strong> <span id="f-val">--</span>
+            <span id="f-val-desc" class="small dim"></span>
+          </div>
+          <div class="pill pill--blue">
+            <strong>Arousal（覚醒−鎮静）:</strong> <span id="f-aro">--</span>
+            <span id="f-aro-desc" class="small dim"></span>
+          </div>
+        </div>
+
+        <div class="badge" id="focusCountdown" aria-live="polite">5</div>
+        <p class="small dim" style="margin-top:8px;">「この状態を想像してください」。終了後に描画できます。</p>
       </div>
     </div>
   </div>
