@@ -343,3 +343,23 @@ body { line-height: 1.9; }
   width: 20px;
   height: 20px;
 }
+
+/* disabled ボタンの見た目 */
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+  pointer-events: none;
+}
+
+/* 青ボタン */
+.btn.primary {
+  background: #2563eb;
+  color: #fff;
+}
+/* hover は enabled のときだけ */
+.btn.primary:hover:enabled {
+  filter: brightness(1.05);
+}
+

@@ -1,4 +1,4 @@
-// draw.js (fixed)
+// draw.js (10秒後にOKが有効化／カウントダウン非表示)
 
 (() => {
   const canvas  = document.getElementById("drawingCanvas");
@@ -16,8 +16,8 @@
   const fAro       = document.getElementById("f-aro")     || document.getElementById("fv-aro");
   const fValDesc   = document.getElementById("f-val-desc")|| document.getElementById("fv-val-desc");
   const fAroDesc   = document.getElementById("f-aro-desc")|| document.getElementById("fv-aro-desc");
-  const fCountdown = document.getElementById("focusCountdown"); // 無ければ未使用
-  const fTitle     = document.getElementById("focusTitle") || (focusModal ? focusModal.querySelector(".modal__head h3") : null);
+  const fTitle     = document.getElementById("focusTitle") || (focusModal ? focusModal.querySelector(".modal__body h3, .modal__head h3") : null);
+  const focusOkBtn = document.getElementById("focusOkBtn"); // ★ 追加：OKボタン
   const valuesPills = [fVal, fAro, fValDesc, fAroDesc].map(el => el ? el.closest(".pill") || el : null);
 
   const participantId = localStorage.getItem("participant_id");
@@ -34,8 +34,8 @@
   let currentArousal = null;
   let trialCount = parseInt(localStorage.getItem("trial_count") || "0", 10);
   const MAX_TRIALS = 10;
-  let countdownTimer = null;
-  let submitting = false; // 二重送信防止
+  let focusUnlockTimer = null;  // ★ 10秒の内部タイマー
+  let submitting = false;       // 二重送信防止
 
   // ★ トラップ管理キー
   const TRAP_KEY_INDEX = "trap_trial_index"; // 1..MAX_TRIALS のどこか
@@ -47,16 +47,14 @@
   const getTrapIndex = () => parseInt(localStorage.getItem(TRAP_KEY_INDEX) || "0", 10);
   const setTrapIndex = (n) => localStorage.setItem(TRAP_KEY_INDEX, String(n));
 
-  // ★ 残り回の中でトラップ回を必ず保証する
+  // 残り回の中でトラップ回を必ず保証
   function ensureTrapIndex() {
-    if (!isTrapPending()) return null; // 既に消化済み
+    if (!isTrapPending()) return null;
     const next = nextTrialNumber();
     let idx = getTrapIndex();
-
-    // 未設定 / 範囲外 / 既に過ぎた番号 → 再設定
     if (!(idx >= next && idx <= MAX_TRIALS)) {
       const span = MAX_TRIALS - next + 1;
-      if (span <= 0) return null; // 残り無し
+      if (span <= 0) return null;
       idx = Math.floor(Math.random() * span) + next; // [next .. MAX_TRIALS]
       setTrapIndex(idx);
     }
@@ -83,11 +81,10 @@
   }
 
   function drawDecor() {
-    // DPRに合わせて内部解像度を調整
     const r = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const needResize = canvas.width !== Math.round(r.width * dpr) || canvas.height !== Math.round(r.height * dpr);
-    if (needResize && !drawing) { // 描き中は破壊的変更を避ける
+    if (needResize && !drawing) {
       canvas.width  = Math.round(r.width * dpr);
       canvas.height = Math.round(r.height * dpr);
     }
@@ -117,8 +114,14 @@
     return data;
   }
 
-  // ★ 5秒だけフォーカス（通常 or トラップ）
-  function showFocusOverlay(seconds = 5, mode = "normal") {
+  // ★ 10秒だけフォーカス（通常 or トラップ）— カウントは内部、OKボタンは10秒後に有効化
+  function showFocusOverlay(seconds = 10, mode = "normal") {
+    // 既存タイマー破棄
+    if (focusUnlockTimer) {
+      clearTimeout(focusUnlockTimer);
+      focusUnlockTimer = null;
+    }
+
     // 値・説明を反映/表示切替
     const showValues = (mode !== "trap");
     [fVal, fAro, fValDesc, fAroDesc].forEach(el => { if (el) el.textContent = ""; });
@@ -149,31 +152,35 @@
     canDraw = false;
     disableActionButtons(true);
     if (focusModal) focusModal.setAttribute("aria-hidden", "false");
-
-    // カウントダウン（要素があれば表示）
-    if (countdownTimer) clearInterval(countdownTimer);
-    if (fCountdown) {
-      let remain = seconds;
-      fCountdown.textContent = String(remain);
-      countdownTimer = setInterval(() => {
-        remain -= 1;
-        fCountdown.textContent = String(remain);
-        if (remain <= 0) {
-          clearInterval(countdownTimer);
-          countdownTimer = null;
-          if (focusModal) focusModal.setAttribute("aria-hidden", "true");
-          canDraw = true;
-          disableActionButtons(false);
-        }
-      }, 1000);
-    } else {
-      // カウントダウン要素が無いレイアウト向け
-      setTimeout(() => {
-        if (focusModal) focusModal.setAttribute("aria-hidden", "true");
-        canDraw = true;
-        disableActionButtons(false);
-      }, seconds * 1000);
+    if (focusOkBtn) {
+      focusOkBtn.disabled = true;     // ★ 最初は押せない
+      focusOkBtn.classList.add('is-wait');
+      focusOkBtn.setAttribute('aria-disabled', 'true');
     }
+
+    // 10秒「内部」カウント → OK有効化
+    focusUnlockTimer = setTimeout(() => {
+      if (focusOkBtn) {
+        focusOkBtn.disabled = false;
+        focusOkBtn.classList.remove('is-wait');
+        focusOkBtn.removeAttribute('aria-disabled');
+        focusOkBtn.focus?.();
+      }
+    }, seconds * 1000);
+  }
+
+  // OKクリックで描画解放
+  if (focusOkBtn) {
+    focusOkBtn.addEventListener('click', () => {
+      if (focusOkBtn.disabled) return; // まだ10秒経ってない
+      if (focusUnlockTimer) {
+        clearTimeout(focusUnlockTimer);
+        focusUnlockTimer = null;
+      }
+      if (focusModal) focusModal.setAttribute("aria-hidden", "true");
+      canDraw = true;
+      disableActionButtons(false);
+    });
   }
 
   function disableActionButtons(disabled) {
@@ -185,13 +192,13 @@
   }
 
   async function prepareNewTask() {
-    // ★ 残り回の中でトラップ回を保証（ここで毎回）
+    // 残り回の中でトラップ回を保証
     ensureTrapIndex();
 
     clearCanvas(true);
     try {
       await fetchTask();
-      showFocusOverlay(5, isTrapNow() ? "trap" : "normal");
+      showFocusOverlay(10, isTrapNow() ? "trap" : "normal"); // ★ 10秒に変更
     } catch {
       alert("お題の取得に失敗しました");
       disableActionButtons(false);
@@ -199,7 +206,7 @@
   }
 
   async function submitDrawing() {
-    if (submitting) return; // 二重送信ガード
+    if (submitting) return;
 
     if (trialCount >= MAX_TRIALS) {
       alert("すでに全10回が完了しています。");
@@ -209,21 +216,18 @@
     if (currentValence === null || currentArousal === null) { alert("お題が未取得です"); return; }
 
     const trap = isTrapNow();
-    // 通常時はしっかり描いてもらう
     if (!trap && points.length < 3) { alert("もっとしっかり円を描いてください"); return; }
 
-    // ★ トラップの評価と保存用マーキング（サーバ互換：-1ダミー点）
+    // トラップの評価と保存用マーキング
     let payloadPoints;
     if (trap) {
-      const passed = points.length < 3; // 何も描かなかった（またはほぼ0）
+      const passed = points.length < 3;
       if (passed) {
-        // 空送信だとサーバに弾かれる想定→ダミー3点＋フラグ
         payloadPoints = [
           {x:-1, y:-1, trap:true, trap_result:"pass"},
           {x:-1, y:-1}, {x:-1, y:-1}
         ];
       } else {
-        // 実描画の先頭点にフラグを付与
         payloadPoints = points.slice();
         if (payloadPoints.length) payloadPoints[0] = { ...payloadPoints[0], trap:true, trap_result:"fail" };
       }
@@ -253,7 +257,6 @@
       const data = await res.json();
       if (data.status !== "success") throw new Error("submit error");
 
-      // トラップを消化済みに
       if (trap) localStorage.setItem(TRAP_KEY_DONE, "true");
 
       trialCount += 1;
@@ -356,14 +359,12 @@
 
   // ====== Init ======
   (async function init(){
-    // 10回完了済なら即thanksへ
     if (trialCount >= MAX_TRIALS) {
       alert("全10回の提出が完了しています。ご協力ありがとうございます。");
       location.href = "/thanks";
       return;
     }
 
-    // ペン見た目
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 2.5;
@@ -372,10 +373,9 @@
     refreshRectCache();
     updateProgress();
 
-    // ★ 初回起動時にも必ず保証
     ensureTrapIndex();
 
-    await prepareNewTask(); // 初回も5秒フォーカス（トラップかも）
+    await prepareNewTask(); // 初回も10秒フォーカス（トラップかも）
 
     window.addEventListener('orientationchange', ()=> { if (!drawing) { drawDecor(); refreshRectCache(); } });
     window.addEventListener('resize', ()=> { if (!drawing) { drawDecor(); refreshRectCache(); } });
