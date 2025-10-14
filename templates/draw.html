@@ -10,7 +10,12 @@
   <header class="container">
     <div class="hero">
       <h1>円を描いて送信（全10回）</h1>
-      <p class="dim">お題の値に合わせて<strong>一筆で円を1つ</strong>描いてください</p>
+      <!-- ヒーロー部の説明を置き換え -->
+    <p class="dim">
+      お題は <strong>Valence（快−不快）と Arousal（覚醒−鎮静）の数値の組合せ</strong>です。<br>
+      まずその<strong>気持ちを10秒間イメージ</strong>し、その感じに合う<strong>一筆の「円」を1つ</strong>描いてください。<br>
+    </p>
+
     </div>
 
     <!-- sticky 上部バー -->
@@ -26,8 +31,9 @@
             <span id="arousal-desc" class="small dim"></span>
           </div>
           <div class="pill">
-            <strong>進捗:</strong> <span id="progress">0/10</span>
+            <strong>進捗:</strong> <span id="progress">0/10 完了</span>
           </div>
+
         </div>
         <div class="actions actions--tight">
           <button id="howtoBtn" class="btn ghost">実験方法</button>
@@ -43,6 +49,16 @@
       <div class="canvas-outer">
         <div class="canvas-wrap">
           <canvas id="drawingCanvas" width="500" height="500"></canvas>
+        </div>
+      </div>
+                <!-- 送信後に1秒だけ出す小さな通知 -->
+      <div class="modal" id="doneModal" aria-hidden="true">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content" role="dialog" aria-modal="true" style="max-width:420px">
+          <div class="modal__body" style="text-align:center; padding:18px 16px;">
+            <div class="badge" id="doneText" aria-live="polite">0/10 完了しました</div>
+            <p class="small dim" style="margin-top:8px;">次のお題を準備しています…</p>
+          </div>
         </div>
       </div>
       <div class="body">
@@ -68,25 +84,32 @@
         <button class="modal__close" id="howtoClose" aria-label="閉じる">×</button>
       </div>
       <div class="modal__body prose">
-        <ol>
-          <li>各試行で<strong>Valence（快−不快）/Arousal（覚醒−鎮静）</strong>の値が提示されます。</li>
-          <li>値のイメージに合うよう，キャンバスに<strong>一筆で「円」を1つ</strong>描いてください。<br>大きさ・密度・勢い（速さ）などを工夫してください。</li>
-          <li><strong>送信</strong>で1回分を記録します。全<strong>10回</strong>行います。</li>
-        </ol>
-        <p class="small dim">※ 文字や記号の書き込みは避けてください（円の描線のみ）。</p>
+        <!-- 実験方法モーダルの本文だけ置き換え -->
+      <ol>
+        <li>各試行で <strong>Valence/Arousal</strong> の数値が提示されます（＝今回のお題）。</li>
+        <li>最初の10秒は<strong>お題の気持ちを想像する時間</strong>です（OKが押せるまで待つ）。</li>
+        <li>OKの後、キャンバスに<strong>一筆で円を1つ</strong>描いて送信します。全<strong>10回</strong>です。</li>
+      </ol>
+      <p class="small dim">※ 円以外の文字や記号は書かないでください。</p>
+
       </div>
     </div>
   </div>
+
+
+
 
 <!-- ★ 値に集中して想像してもらう オーバーレイ -->
 <div class="modal" id="focusModal" aria-hidden="true">
   <div class="modal__backdrop"></div>
   <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="focusTitle">
     <div class="modal__body" style="text-align:center">
-      <h3 id="focusTitle" style="margin-top:6px;">お題を想像する時間</h3>
+      <h3 id="focusTitle" style="margin-top:6px;">お題の気持ちをイメージする時間</h3>
       <p id="focusMsg" class="dim" style="margin:6px 0 12px;">
-        お題について<strong>10秒以上</strong>考えてください！<br>10秒後にOKボタンが押せるようになります。
+        この組合せから感じる気持ちを想像してください。<br>
+        <strong>10秒後</strong>に「OK」が押せるようになり、描画を開始できます。
       </p>
+
 
       <div class="pillwrap" style="justify-content:center; margin-bottom:12px;">
         <div class="pill pill--blue">
@@ -104,9 +127,6 @@
     </div>
   </div>
 </div>
-
-
-
   <footer><small>© 2025 Osawa Lab</small></footer>
   <script src="{{ url_for('static', filename='draw.js') }}"></script>
 </body>

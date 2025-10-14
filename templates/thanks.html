@@ -11,22 +11,69 @@
     <section class="card center-card">
       <div class="head"><h2>ご協力ありがとうございました</h2></div>
       <div class="body" style="text-align:center;">
-        <p>全10回の提出が完了しました。研究にご協力いただきありがとうございます。</p>
-        <div id="finalId" class="badge" style="display:none; margin:10px 0;"></div>
-        <p class="small dim">学習着手前の撤回をご希望の場合は，控えた参加者IDをご提示ください。
-        <p class="small"><a class="link" href="/withdraw">撤回申請フォームへ</a></p>
+        <p>全10回の提出が完了しました．研究にご協力いただきありがとうございます．</p>
+
+        <!-- 参加者ID表示 -->
+        <div class="pill" style="justify-content:center; margin:10px 0;">
+          <strong>参加者ID：</strong><span id="finalId">---</span>
+        </div>
+
+        <hr style="margin:16px 0;">
+
+        <!-- クラウドワークス用 合言葉（完了者のみ表示） -->
+        <h3 style="margin:6px 0 8px;">クラウドワークスへの入力</h3>
+        <p class="small">作業完了画面に次の合言葉を入力してください．</p>
+        <div class="center-actions" style="margin:10px 0 14px;">
+          <div class="badge" id="cwKeyword" aria-live="polite">どら焼き</div>
+          <div class="actions center-actions" style="margin-top:10px;">
+            <button id="copyCw" class="btn ghost">合言葉をコピー</button>
+          </div>
+        </div>
+
+        <hr style="margin:16px 0;">
+
+        <!-- 撤回について（14日明示） -->
+        <h3 style="margin:6px 0 8px;">撤回について</h3>
+        <p class="small dim" style="margin-top:4px;">
+          撤回はいつでも申請できます．ただし，参加後に時間が経過すると学習済みモデルからの完全削除が困難となる場合があります．<br>
+          <strong>原則として参加後14日以内に撤回を申請してください．</strong>
+          撤回には参加者IDが必要です．
+        </p>
+        <p class="small" style="margin-top:6px;">
+          <a class="link" href="/withdraw">撤回申請フォームへ</a>
+        </p>
       </div>
     </section>
   </main>
+
   <footer class="container container--narrow"><small>© 2025 Osawa Lab</small></footer>
 
   <script>
-    const el = document.getElementById('finalId');
-    const pid = localStorage.getItem('participant_id');
-    if (pid) {
-      el.textContent = `参加者ID：${pid}`;
-      el.style.display = 'inline-block';
-    }
+    (function(){
+      const MAX_TRIALS = 10;
+
+      // 完了者以外は描画ページへ戻す
+      const tc = parseInt(localStorage.getItem('trial_count') || '0', 10);
+      if (isNaN(tc) || tc < MAX_TRIALS) {
+        location.href = '/draw';
+        return;
+      }
+
+      // 参加者ID表示
+      const pid = localStorage.getItem('participant_id') || '未発行';
+      document.getElementById('finalId').textContent = pid;
+
+      // 合言葉コピー
+      const copyBtn = document.getElementById('copyCw');
+      copyBtn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText('どら焼き');
+          alert('合言葉をコピーしました．');
+        } catch {
+          alert('コピーに失敗しました．手動で入力してください：どら焼き');
+        }
+      });
+    })();
   </script>
 </body>
 </html>

@@ -81,24 +81,34 @@
   }
 
   function validate() {
-    const errors = {};
-    // 必須は空文字のみNG（"noanswer" は選択肢としてOK）
-    if (!genderEl.value)     errors.gender = '性別を選択してください。';
-    if (!ageEl.value)        errors.age    = '年齢（年代）を選択してください。';
-    if (!handedEl.value)     errors.handed = '利き手を選択してください。';
-    if (!deviceTypeEl.value) errors.device = 'インターフェースを選択してください。';
+  const errors = {};
 
-    // 同意（必須）は consent ページで取得済みか確認（サーバ側でも検証あり）
-    const consentOK = localStorage.getItem('consent_participate') === 'true';
-    if (!consentOK) {
-      errors.consent = '同意ページで「実験参加への同意」を完了してください。';
+  if (!genderEl.value)     errors.gender = '性別を選択してください。';
+
+  // ★ 年齢: 整数入力の検証
+  const ageRaw = (ageEl.value || '').trim();
+  if (!ageRaw) {
+    errors.age = '年齢を入力してください。';
+  } else {
+    const ageNum = Number(ageRaw);
+    if (!Number.isInteger(ageNum) || ageNum < 10 || ageNum > 120) {
+      errors.age = '年齢は18〜120の整数で入力してください。';
     }
-    // 参加者ID
-    if (!participantId) {
-      errors.pid = '参加者IDの発行に失敗しました。ページを更新して再度お試しください。';
-    }
-    return { ok: Object.keys(errors).length === 0, errors };
   }
+
+  if (!handedEl.value)     errors.handed = '利き手を選択してください。';
+  if (!deviceTypeEl.value) errors.device = 'インターフェースを選択してください。';
+
+  const consentOK = localStorage.getItem('consent_participate') === 'true';
+  if (!consentOK) {
+    errors.consent = '同意ページで「実験参加への同意」を完了してください。';
+  }
+  if (!participantId) {
+    errors.pid = '参加者IDの発行に失敗しました。ページを更新して再度お試しください。';
+  }
+  return { ok: Object.keys(errors).length === 0, errors };
+}
+
 
   async function submit() {
     attempted = true; // ★ 初めて押した瞬間に「以降はエラー表示を許可」
@@ -111,7 +121,7 @@
       user_id: participantId,
       consent_version: localStorage.getItem('consent_version') || CONSENT_VERSION,
       gender: genderEl.value,
-      age_group: ageEl.value,
+      age_years: Number(ageEl.value), 
       handedness: handedEl.value,
       device_type: deviceTypeEl.value,
       consent: localStorage.getItem('consent_participate') === 'true'

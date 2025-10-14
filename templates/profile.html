@@ -44,20 +44,23 @@
             <div id="err-gender" class="error-msg" style="display:none;"></div>
           </div>
 
-          <div class="row">
-            <label for="age">年齢（年代）</label>
-            <select id="age" aria-invalid="false" aria-describedby="err-age">
-              <option value="">選択してください</option>
-              <option value="teens">10代</option>
-              <option value="20s">20代</option>
-              <option value="30s">30代</option>
-              <option value="40s">40代</option>
-              <option value="50s">50代</option>
-              <option value="60splus">60代以上</option>
-              <option value="noanswer">回答しない</option>
-            </select>
-            <div id="err-age" class="error-msg" style="display:none;"></div>
-          </div>
+        <div class="row">
+          <label for="age">年齢（整数）</label>
+          <input
+            id="age"
+            type="number"
+            inputmode="numeric"
+            min="18"
+            max="120"
+            step="1"
+            placeholder="例: 20"
+            aria-invalid="false"
+            aria-describedby="err-age"
+          />
+          <div id="err-age" class="error-msg" style="display:none;"></div>
+          <p class="small dim">※ 18〜120の整数で入力してください。</p>
+        </div>
+
 
           <div class="row">
             <label for="handed">利き手</label>
