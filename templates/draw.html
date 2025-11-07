@@ -26,8 +26,8 @@
     <div class="hero">
       <h1>円を描いて送信してください（全10回）</h1>
       <p class="dim">
-        お題は <strong>Valence（快−不快）と Arousal（覚醒−鎮静）</strong> の数値の組合せです。<br>
-        <strong>10秒間で</strong>数字から読み取れる気持ちになってみて，その気持ちで<strong>「円」を1つ</strong>描いてください。
+        お題は <strong>Valence（快−不快）と Arousal（覚醒−鎮静）</strong> の数値の組合せです．<br>
+        <strong>10秒間で</strong>10秒間で数字から読み取れる気持ちになってみて，その気持ちで<strong>「円」を1つ</strong>描いてください．
       </p>
     </div>
 
@@ -52,7 +52,6 @@
           <!-- 上部のVAミニマップ（任意・JSが存在チェックして描画） -->
           <div class="vamap">
             <canvas id="vaMapTop" width="180" height="160" aria-hidden="true"></canvas>
-            <span class="small">Valence × Arousal</span>
           </div>
         </div>
 
@@ -78,7 +77,7 @@
           <button id="clearBtn" class="btn ghost">消去</button>
           <button id="submitBtn" class="btn primary">送信</button>
         </div>
-        <p class="small dim center-note">※ 提出ボタンを押すと1回分としてカウントされます（全10回）。</p>
+        <p class="small dim center-note">※ 送信ボタンを押すと1回分としてカウントされます（全10回）．</p>
       </div>
     </section>
 
@@ -97,11 +96,11 @@
       </div>
       <div class="modal__body prose">
         <ol>
-          <li>各試行で <strong>Valence/Arousal</strong> の数値が提示されます（＝今回のお題）。</li>
-          <li>最初の10秒は<strong>お題の気持ちを想像する時間</strong>です（OKが押せるまで待つ）。</li>
-          <li>OKの後，キャンバスに<strong>一筆で円を1つ</strong>描いて送信します。全<strong>10回</strong>です。</li>
+          <li>各試行で <strong>Valence（快−不快）/Arousal（覚醒−鎮静）</strong> の数値が提示されます（＝今回のお題）．</li>
+          <li>最初の10秒は<strong>お題の気持ちを想像する時間</strong>です（OKが押せるまで待つ）．</li>
+          <li>OKの後，キャンバスに<strong>一筆で円を1つ</strong>描いて送信します。全<strong>10回</strong>です．</li>
         </ol>
-        <p class="small dim">※ 円以外の文字や記号は書かないでください。</p>
+        <p class="small dim">※ 円以外の文字や記号は書かないでください．</p>
       </div>
     </div>
   </div>
@@ -124,15 +123,9 @@
       <div class="modal__body" style="text-align:center">
         <h3 id="focusTitle" style="margin-top:6px;">お題の気持ちをイメージする時間</h3>
         <p id="focusMsg" class="dim" style="margin:6px 0 12px;">
-          この組合せから感じる気持ちになってみてください。<br>
-          <strong>10秒後</strong>に「OK」が押せるようになり，描画を開始できます。
+          Valence / Arousal の値の組合せから想像される気持ちになってみてください．<br>
+          <strong>10秒後</strong>に「OK」が押せるようになり，描画を開始できます．
         </p>
-
-        <!-- フォーカス中のVAミニマップ（任意） -->
-        <div class="vamap" style="margin: 6px auto 12px;">
-          <canvas id="vaMapFocus" width="200" height="170" aria-hidden="true"></canvas>
-          <span class="small">Valence × Arousal</span>
-        </div>
 
         <div class="pillwrap" style="justify-content:center; margin-bottom:12px;">
           <div class="pill pill--blue">
@@ -143,6 +136,11 @@
             <strong>Arousal（覚醒−鎮静）:</strong> <span id="f-aro">--</span>
             <span id="f-aro-desc" class="small dim"></span>
           </div>
+        </div>
+
+        <!-- フォーカス中のVAミニマップ（任（快−不快）意） -->
+        <div class="vamap" style="margin: 6px auto 12px;">
+          <canvas id="vaMapFocus" width="200" height="170" aria-hidden="true"></canvas>
         </div>
 
         <!-- 10秒間は無効。JSで有効化 -->
