@@ -10,21 +10,23 @@
   <header class="container container--narrow">
     <div class="hero hero--spacious">
       <h1>基本情報の入力</h1>
-      <p class="dim">IDは自動で発行されます（撤回時に必要）。必ず控えてください。</p>
+      <p class="dim">IDは自動で発行されます（撤回時に必要）．必ず控えてください．</p>
     </div>
   </header>
 
   <main class="container container--narrow stack-lg">
+    <!-- 参加者ID -->
     <section class="card">
       <div class="head"><h2>参加者ID（自動発行）</h2></div>
       <div class="body">
         <div class="row">
           <div id="issuedId" class="badge" style="display:none;"></div>
         </div>
-        <p class="small dim">※ 学習開始前の撤回にはこのIDが必要です（学習開始後は撤回不可の場合があります）。</p>
+        <p class="small dim">※ 学習開始前の撤回にはこのIDが必要です（学習開始後は撤回不可の場合があります）．</p>
       </div>
     </section>
 
+    <!-- 基本情報 -->
     <section class="card">
       <div class="head"><h2>基本情報</h2></div>
       <div class="body">
@@ -32,6 +34,7 @@
         <div id="errorSummary" class="error-summary" role="alert" aria-live="polite" style="display:none;"></div>
 
         <div class="grid-2">
+          <!-- 性別 -->
           <div class="row">
             <label for="gender">性別</label>
             <select id="gender" aria-invalid="false" aria-describedby="err-gender">
@@ -44,24 +47,24 @@
             <div id="err-gender" class="error-msg" style="display:none;"></div>
           </div>
 
-        <div class="row">
-          <label for="age">年齢（整数）</label>
-          <input
-            id="age"
-            type="number"
-            inputmode="numeric"
-            min="18"
-            max="120"
-            step="1"
-            placeholder="例: 20"
-            aria-invalid="false"
-            aria-describedby="err-age"
-          />
-          <div id="err-age" class="error-msg" style="display:none;"></div>
-          <p class="small dim">※ 18〜120の整数で入力してください。</p>
-        </div>
+          <!-- 年齢 -->
+          <div class="row">
+            <label for="age">年齢（整数）</label>
+            <input
+              id="age"
+              type="number"
+              inputmode="numeric"
+              min="18"
+              max="120"
+              step="1"
+              placeholder="18〜120 の整数（例: 20）"
+              aria-invalid="false"
+              aria-describedby="err-age"
+            />
+            <div id="err-age" class="error-msg" style="display:none;"></div>
+          </div>
 
-
+          <!-- 利き手 -->
           <div class="row">
             <label for="handed">利き手</label>
             <select id="handed" aria-invalid="false" aria-describedby="err-handed">
@@ -74,12 +77,12 @@
             <div id="err-handed" class="error-msg" style="display:none;"></div>
           </div>
 
+          <!-- 入力端末 -->
           <div class="row">
             <label for="deviceType">入力端末</label>
             <select id="deviceType" aria-invalid="false" aria-describedby="err-deviceType">
               <option value="">選択してください</option>
               <option value="pc">PC</option>
-              <option value="smartphone">スマホ</option>
               <option value="tablet">タブレット</option>
               <option value="other">その他</option>
               <option value="noanswer">回答しない</option>
@@ -100,7 +103,8 @@
   </main>
 
   <footer class="container container--narrow"><small>© 2025 Osawa Lab</small></footer>
-  <script>const CONSENT_VERSION="v1.0";</script>
+  <!-- consent.js で v1.1 を保存しているので既定も合わせる -->
+  <script>const CONSENT_VERSION="v1.1";</script>
   <script src="{{ url_for('static', filename='profile.js') }}"></script>
 </body>
 </html>
