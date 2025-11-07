@@ -116,30 +116,24 @@ select:focus, input[type="text"]:focus, textarea:focus{
   position:sticky; top:0; z-index:100; backdrop-filter:saturate(1.2) blur(4px);
 }
 
-/* キャンバスの中央配置とサイズ調整（値が見えるようやや小さめ） */
+/* キャンバスの中央配置 */
 .center-card{ margin-top:16px; }
 .canvas-outer{ display:flex; align-items:center; justify-content:center; padding:12px; }
 .center-note{ text-align:center; margin-top:8px; }
 
-/* 既定サイズ：やや小さめ + 画面幅に応じて縮小 */
+/* === ここだけ修正：Canvasを端末に依存せず固定サイズに === */
 .canvas-wrap{display:grid; place-items:center}
 canvas{
   display:block;
-  width:min(70vw, 440px); height:min(70vw, 440px);
-  max-width:440px; max-height:440px;
+  width:500px;               /* ← 固定 */
+  height:500px;              /* ← 固定 */
+  max-width:none;            /* ← 可変上限を解除 */
+  max-height:none;           /* ← 可変上限を解除 */
   border:2px solid var(--primary);
   background:#fff;
   touch-action:none;
   border-radius:10px;
   box-shadow:0 10px 24px rgba(37,99,235,.08);
-}
-/* モバイル幅：さらに少し小さく */
-@media (max-width:700px){
-  canvas{ width:min(82vw,360px); height:min(82vw,360px); max-width:360px; max-height:360px; }
-}
-/* 画面が低い場合（横向き等）：高さ基準で縮小 */
-@media (max-height:700px){
-  canvas{ width:min(70vh,360px); height:min(70vh,360px); }
 }
 
 /* Consent checkbox */
@@ -255,11 +249,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible{
 .step--active{ border-color:#c7d2fe; box-shadow:0 6px 16px rgba(37,99,235,.12); }
 .step--active span{ background: var(--primary); color:#fff; }
 
-/* キャンバス：超小さい画面での一段縮小（値と同時表示しやすく） */
-@media (max-width: 380px){
-  canvas{ width:min(86vw, 320px); height:min(86vw, 320px); max-width:320px; max-height:320px; }
-}
-
 /* ===== Consent page readability overrides ===== */
 body { line-height: 1.9; }
 
@@ -283,7 +272,7 @@ body { line-height: 1.9; }
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  padding: 0;
 }
 
 /* 進行ステップがある場合の微調整（小さめ表示） */
@@ -297,54 +286,36 @@ body { line-height: 1.9; }
 }
 .step--active { color: var(--text); }
 
-
 /* アイコンのみボタン */
 .icon-only {
-  padding: 10px;           /* 正方形に近い当たり判定 */
+  padding: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 0;          /* 余白を詰める */
+  line-height: 0;
 }
-
-.icon-only svg {
-  width: 20px;
-  height: 20px;
-}
+.icon-only svg { width: 20px; height: 20px; }
 
 /* 説明書ボタン行の揃え */
 .inline-dl{
   display:flex;
-  align-items:center;      /* 垂直中央 */
+  align-items:center;
   gap:10px;
   flex-wrap:wrap;
 }
-
-/* この行のボタンだけ高さを固定して揃える（他のボタンは影響なし） */
 .inline-dl .btn{
-  --btn-h: 44px;           /* タップしやすい最小推奨サイズ */
+  --btn-h: 44px;
   height: var(--btn-h);
   padding: 0 14px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   vertical-align:middle;
-  line-height:1;           /* 余白のブレ防止 */
+  line-height:1;
 }
+.inline-dl .btn.icon-only{ width: var(--btn-h); padding:0; }
+.inline-dl .btn.icon-only svg{ width:20px; height:20px; }
 
-/* アイコンだけのボタンは正方形に */
-.inline-dl .btn.icon-only{
-  width: var(--btn-h);
-  padding: 0;              /* 内側余白は不要 */
-}
-
-/* SVGサイズを明示（綺麗に中央） */
-.inline-dl .btn.icon-only svg{
-  width: 20px;
-  height: 20px;
-}
-
-/* disabled ボタンの見た目 */
 .btn[disabled],
 .btn[aria-disabled="true"] {
   opacity: 0.5;
@@ -352,16 +323,8 @@ body { line-height: 1.9; }
   filter: grayscale(100%);
   pointer-events: none;
 }
-
-/* 青ボタン */
-.btn.primary {
-  background: #2563eb;
-  color: #fff;
-}
-/* hover は enabled のときだけ */
-.btn.primary:hover:enabled {
-  filter: brightness(1.05);
-}
+.btn.primary { background:#2563eb; color:#fff; }
+.btn.primary:hover:enabled { filter:brightness(1.05); }
 
 .va-map-wrap{
   display:flex;
@@ -374,4 +337,323 @@ body { line-height: 1.9; }
   height: 220px;
   border-radius: 8px;
   box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
+}
+
+/* --- VAミニマップの青枠を完全に無効化 --- */
+.vamap { outline:none !important; border:none !important; box-shadow:none !important; }
+.vamap canvas { border:0 !important; outline:0 !important; }
+.vamap:focus, .vamap canvas:focus { outline:none !important; }
+
+/* ---- 情報ボックス（枠で囲う） ---- */
+.info-box{
+  max-width: 520px;
+  margin: 10px auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 10px 12px;
+  text-align: left;
+}
+.info-box__label{
+  font-size: 12px;
+  color: #6b7280;
+  letter-spacing: .02em;
+  margin-bottom: 4px;
+}
+.info-box__value{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 15px;
+  color: #111827;
+}
+
+/* 小さめコピーアイコンボタン */
+.copy-btn{
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform .06s ease, box-shadow .12s ease;
+}
+.copy-btn--icon{
+  width: 30px; height: 30px; padding: 0; line-height: 1;
+  display:flex; align-items:center; justify-content:center;
+}
+.copy-btn:hover{ transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.copy-btn:active{ transform: translateY(0); }
+
+/* コピーの小トースト */
+.copy-toast{
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%);
+  background: #111827; color: #fff; padding: 8px 12px; border-radius: 10px;
+  font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.copy-toast.show{ opacity: .92; }
+
+/* 枠外・小さめ撤回ボタン（中央） */
+.withdraw-cta{
+  text-align: center;
+  margin: 8px 0 14px;
+  color: #6b7280;
+}
+.btn.tiny{ font-size: 12px; padding: 5px 10px; border-radius: 999px; }
+.btn.ghost{ border: 1px solid #d1d5db; background: #fff; color: #374151; }
+.sep{ margin: 16px 0; border: 0; height: 1px; background: #e5e7eb; }
+.mt-8{ margin-top: 8px; }
+
+/* ---- 情報ボックス ---- */
+.info-box{
+  max-width: 520px;
+  margin: 10px auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 10px 12px;
+}
+.info-box__label{
+  font-size: 12px;
+  color: #6b7280;
+  letter-spacing: .02em;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.info-box__value{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 15px;
+  color: #111827;
+}
+.info-box__value--center{ justify-content: center; }
+
+.copy-btn{
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform .06s ease, box-shadow .12s ease;
+}
+.copy-btn--icon{
+  width: 28px; height: 28px;
+  padding: 0; line-height: 1;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 14px;
+}
+.copy-btn:hover{ transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.copy-btn:active{ transform: translateY(0); }
+
+.copy-toast{
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%);
+  background: #111827; color: #fff; padding: 8px 12px; border-radius: 10px;
+  font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.copy-toast.show{ opacity: .92; }
+
+/* ---- 枠外・小さめ撤回リンク（スクショ風） ---- */
+.withdraw-inline{
+  text-align: center;
+  margin: 16px 0 8px;
+  color: #6b7280;
+}
+.withdraw-inline__link{
+  display: inline-block;
+  font-size: 14px;
+  color: #3b82f6;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(59,130,246,.35);
+  padding-bottom: 2px;
+}
+.withdraw-inline__link:hover{
+  color: #1d4ed8;
+  border-bottom-color: rgba(29,78,216,.5);
+}
+.withdraw-inline__note{
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+  color: #9ca3af;
+}
+
+.sep{ margin: 16px 0; border: 0; height: 1px; background: #e5e7eb; }
+.mt-8{ margin-top: 8px; }
+
+/* 統一のためのコントロール高さ */
+:root { --ctl-h: 44px; }
+
+/* すべての入力を同じ見た目に統一 */
+select,
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+  transition: box-shadow .2s ease, border-color .2s ease;
+  min-height: var(--ctl-h);
+  line-height: 1.3;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* フォーカス時（統一） */
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 4px rgba(147,197,253,.35);
+}
+
+/* 数値入力の端末差を軽減（必要なら） */
+input[type="number"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Chrome スピンボタン（任意） */
+/*
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+*/
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 36px;
+}
+
+/* Controls: 同じ高さ・同じ内側余白・同じ行揃え */
+:root { --ctl-h: 44px; }
+select,
+input[type="number"] {
+  height: var(--ctl-h);
+  line-height: calc(var(--ctl-h) - 2px);
+  padding: 0 12px;
+  width: 100%;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+select { -webkit-appearance: none; appearance: none; padding-right: 36px; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+.row { align-items: start; }
+label { line-height: 1.2; }
+
+select:focus,
+input[type="number"]:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 4px rgba(147,197,253,.35);
+}
+
+.is-invalid {
+  height: var(--ctl-h);
+  line-height: calc(var(--ctl-h) - 2px);
+}
+
+/* === Canvas & VA map: responsive, device-agnostic === */
+:root{
+  /* Canvas は最大 360px。狭い端末では 300px まで自動で縮む */
+  --canvas-size: clamp(300px, 85vmin, 360px);
+  /* VA ミニマップは最大 220px。狭い端末では 160px まで縮む */
+  --vamap-size: clamp(160px, 40vmin, 220px);
+}
+
+/* キャンバスの中央配置は既存のまま */
+.canvas-wrap{ display:grid; place-items:center }
+
+/* ここを置き換え：端末に依存せず “同じ見た目上限” を維持しつつ縮む */
+canvas{
+  display:block;
+  width: var(--canvas-size);
+  height: var(--canvas-size);
+  border:2px solid var(--primary);
+  background:#fff;
+  touch-action:none;
+  border-radius:10px;
+  box-shadow:0 10px 24px rgba(37,99,235,.08);
+}
+
+/* VAミニマップ（Top/Focus）も可変に */
+#vaMapTop, #vaMapFocus{
+  width: var(--vamap-size);
+  height: var(--vamap-size);
+  max-width: none;
+  max-height: none;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
+}
+
+/* trap 強調（タイトルを赤） */
+.modal.is-trap #focusTitle {
+  color: #ef4444; /* red-500 */
+}
+
+/* ===== OKボタン中央固定（focusModal専用） ===== */
+#focusModal .modal__content {
+  display: flex;              /* 中身を縦に並べる土台 */
+  justify-content: center;    /* 余白があっても中央寄せ */
+}
+
+#focusModal .modal__body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;     /* タイトル → 説明 → ピル → ミニマップ → ボタン の縦並び */
+  align-items: center;        /* 子要素を中央に */
+  text-align: center;         /* 文言の中央揃え */
+}
+
+/* OKボタンそのものを中央に固定。右寄せ系の汎用スタイルを打ち消す */
+#focusModal .modal__body #focusOkBtn {
+  position: static !important;
+  float: none !important;
+  display: inline-flex;
+  align-self: center !important;
+  margin: 12px auto 0 !important;
+}
+
+/* 万が一 .modal 内の .btn を右寄せしている共通ルールがあれば打ち消す */
+#focusModal .modal__body .btn {
+  margin-left: 0 !important;
+}
+
+/* trap強調（赤）—すでに導入済みなら不要 */
+#focusModal.is-trap #focusTitle,
+.modal.is-trap #focusTitle {
+  color: #ef4444;
+}
+/* thanks: CloudWorks 説明の強調 */
+.cw-heading{
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.3;
+}
+.cw-lead{
+  font-size: clamp(14px, 1.9vw, 16px);
+  line-height: 1.8;
+  color: var(--text);   /* 小さく・薄くしない */
+  font-weight: 500;     /* 少し太くして視認性UP */
+  margin-top: .25rem;
 }
