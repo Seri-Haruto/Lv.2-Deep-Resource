@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>実験の説明｜心のぐるぐる描画</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
+  <!-- 画像用の最小スタイル（style.cssに移してもOK） -->
+  <style>
+    .howto-fig { margin: 10px 0 0; }
+    .howto-fig img {
+      width: 80%; height: auto; display: block;  margin: 0 auto;
+      border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.06);
+      cursor: zoom-in;
+    }
+    .howto-fig figcaption {
+      font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center;
+    }
+    /* 画像拡大モーダル（既存の .modal に準拠） */
+    .img-modal__img {
+      width: 100%; height: auto; display: block;
+      border-radius: 12px; border: 1px solid var(--border);
+    }
+    .img-modal__cap {
+      font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="container hero hero--spacious">
+    <h1>実験の説明</h1>
+    <p class="dim">以下の内容を確認してから実験を開始してください</p>
+  </header>
+
+  <main class="container container--narrow">
+    <section class="card">
+      <div class="head"><h2>概要</h2></div>
+      <div class="body prose">
+        <p>この実験では、提示される <strong>Valence（快−不快）</strong> と
+          <strong>Arousal（覚醒−鎮静）</strong> の数値の組み合わせから
+          イメージされる気持ちを想像し，その気持ちで<strong>円を1つ</strong>描いていただきます．</p>
+      </div>
+    </section>
+
+    <section class="card stack-lg" style="margin-top:12px;">
+      <div class="head"><h2>手順</h2></div>
+      <div class="body prose">
+        <ol>
+          <li>各試行で以下のように <strong>Valence/Arousal</strong> の数値が提示されます．</li>
+
+          <li>
+            最初の <strong>10秒間で数字から読み取れる気持ちになってみて，その気持ちで</strong>
+            お題の気持ちを想像してください．
+            <figure class="howto-fig">
+              <img
+                src="{{ url_for('static', filename='img/howto/focus.png') }}"
+                alt="10秒のイメージ時間とOKボタンの例" 
+                data-zoom-caption="10秒のイメージ時間の画面例（OK押下で描画開始可能に）" />
+              <figcaption>10秒のイメージ時間の画面例</figcaption>
+            </figure>
+          </li>
+
+          <li>
+            OKを押すと以下のキャンバスが表示され，描画が開始できます．キャンバスに<strong>一筆で円を1つ</strong>描いてください．
+            <figure class="howto-fig">
+              <img
+                src="{{ url_for('static', filename='img/howto/draw.png') }}"
+                alt="キャンバスに一筆で円を描く画面の例"
+                data-zoom-caption="キャンバスに一筆で円を描く操作の画面例" />
+              <figcaption>描画操作の画面例（円は一筆で）</figcaption>
+            </figure>
+          </li>
+
+          <li>「送信」を押すと1回分としてカウントされ，次のお題が表示されます．</li>
+          <li>合計<strong>10回</strong>で終了し，完了画面へ遷移します．</li>
+        </ol>
+        <p class="small dim">※ 文字や記号は書かないでください．円の大きさや位置は自由です．</p>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:12px;">
+      <div class="head"><h2>データと匿名性</h2></div>
+      <div class="body prose">
+        <p>提出されるデータには個人を特定する情報は含みません．<br>
+          匿名IDと描画データのみを研究目的で利用します．
+          撤回は「データ撤回」ページから申請できます．</p>
+      </div>
+    </section>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="body">
+        <label class="consent-check">
+          <input type="checkbox" id="howtoCheck" />
+          <span>説明を読み，内容を理解しました</span>
+        </label>
+        <div class="actions" style="justify-content:flex-end; margin-top:8px;">
+          <button id="startBtn" class="btn primary" disabled aria-disabled="true">実験を開始する</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="withdraw-inline">
+      <a class="withdraw-inline__link" href="/withdraw">データ撤回の申請はこちら</a>
+      <span class="withdraw-inline__note">実験開始後でも撤回できます．</span>
+    </div>
+  </main>
+
+  <footer><small>© 2025 Osawa Lab</small></footer>
+
+  <!-- 画像ズーム用のモーダル（既存の .modal スタイルを流用） -->
+  <div class="modal" id="imgModal" aria-hidden="true">
+    <div class="modal__backdrop" id="imgModalBackdrop"></div>
+    <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="imgModalTitle">
+      <div class="modal__head">
+        <h3 id="imgModalTitle">プレビュー</h3>
+        <button class="modal__close" id="imgModalClose" aria-label="閉じる">×</button>
+      </div>
+      <div class="modal__body">
+        <img class="img-modal__img" id="imgModalImg" alt="" />
+        <div class="img-modal__cap" id="imgModalCap"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='howto.js') }}"></script>
+  <script>
+    // 画像クリックで拡大：howto.jsに入れてもOK
+    (() => {
+      const modal = document.getElementById('imgModal');
+      const imgEl = document.getElementById('imgModalImg');
+      const capEl = document.getElementById('imgModalCap');
+      const closeBtn = document.getElementById('imgModalClose');
+      const backdrop = document.getElementById('imgModalBackdrop');
+
+      function open(src, cap) {
+        imgEl.src = src;
+        imgEl.alt = cap || '';
+        capEl.textContent = cap || '';
+        modal.setAttribute('aria-hidden', 'false');
+        closeBtn?.focus();
+      }
+      function close() { modal.setAttribute('aria-hidden', 'true'); }
+
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        if (t.matches('.howto-fig img')) {
+          const src = t.getAttribute('src');
+          const cap = t.getAttribute('data-zoom-caption') || t.getAttribute('alt') || '';
+          if (src) open(src, cap);
+        }
+      });
+      closeBtn?.addEventListener('click', close);
+      backdrop?.addEventListener('click', close);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    })();
+  </script>
+</body>
+</html>
