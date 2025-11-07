@@ -13,63 +13,92 @@
       <div class="body" style="text-align:center;">
         <p>全10回の提出が完了しました．研究にご協力いただきありがとうございます．</p>
 
-        <!-- 参加者ID表示 -->
-        <div class="pill" style="justify-content:center; margin:10px 0;">
-          <strong>参加者ID：</strong><span id="finalId">---</span>
+        <hr class="sep">
+
+        <h3 class="mt-8">クラウドワークスへの入力</h3>
+        <p class="cw-lead">下の<strong>合言葉</strong>と<strong>参加者ID</strong>を作業完了画面にそれぞれ入力してください．</p>
+
+        <!-- 合言葉 -->
+        <div class="info-box">
+          <div class="info-box__label">合言葉</div>
+          <div class="info-box__value">
+            <span id="cwKeyword">どら焼き</span>
+            <button class="copy-btn copy-btn--icon" data-copy="#cwKeyword" aria-label="合言葉をコピー">📋</button>
+          </div>
         </div>
 
-        <hr style="margin:16px 0;">
-
-        <!-- クラウドワークス用 合言葉 -->
-        <h3 style="margin:6px 0 8px;">クラウドワークスへの入力</h3>
-        <p class="small">クラウドワークス上の作業完了画面に次の合言葉と参加者IDを入力してください．</p>
-        <div class="center-actions" style="margin:10px 0 14px;">
-          <div class="badge" id="cwKeyword" aria-live="polite">どら焼き</div>
+        <!-- 参加者ID -->
+        <div class="info-box">
+          <div class="info-box__label">参加者ID</div>
+          <div class="info-box__value">
+            <span id="finalId">---</span>
+            <button class="copy-btn copy-btn--icon" data-copy="#finalId" aria-label="参加者IDをコピー">📋</button>
+          </div>
         </div>
 
-        <hr style="margin:16px 0;">
-
-        <!-- 撤回について（3日明示） -->
-        <h3 style="margin:6px 0 8px;">撤回について</h3>
-        <p class="small dim" style="margin-top:4px;">
-          撤回は<strong>3日以内</strong>であれば申請することができます．<p>
-          撤回には参加者IDが必要です．
-        </p>
-        <p class="small" style="margin-top:6px;">
-          <a class="link" href="/withdraw">撤回申請フォームへ</a>
-        </p>
+        <div id="copyToast" class="copy-toast" aria-live="polite" aria-hidden="true">コピーしました</div>
       </div>
     </section>
+
+    <!-- 枠外・小さめの撤回申請（中央配置・3日以内明示） -->
+    <div class="withdraw-cta">
+      <a class="btn tiny ghost" href="/withdraw">データ撤回を申請</a>
+      <span class="small dim">（<strong>3日以内</strong>・参加者IDが必要）</span>
+    </div>
   </main>
 
   <footer class="container container--narrow"><small>© 2025 Osawa Lab</small></footer>
 
   <script>
-    (function(){
-      const MAX_TRIALS = 10;
+  (function(){
+    const MAX_TRIALS = 10;
 
-      // 完了者以外は描画ページへ戻す
-      const tc = parseInt(localStorage.getItem('trial_count') || '0', 10);
-      if (isNaN(tc) || tc < MAX_TRIALS) {
-        location.href = '/draw';
-        return;
-      }
+    // 参加者ID（必須）
+    const pid = localStorage.getItem('participant_id') || '未発行';
 
-      // 参加者ID表示
-      const pid = localStorage.getItem('participant_id') || '未発行';
-      document.getElementById('finalId').textContent = pid;
+    // trial_count は「参加者ID:trial_count」を優先、なければ旧キーも見る
+    const ns = parseInt(localStorage.getItem(pid + ':trial_count') || 'NaN', 10);
+    const legacy = parseInt(localStorage.getItem('trial_count') || 'NaN', 10);
+    const tc = Number.isFinite(ns) ? ns : (Number.isFinite(legacy) ? legacy : 0);
 
-      // 合言葉コピー
-      const copyBtn = document.getElementById('copyCw');
-      copyBtn?.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText('どら焼き');
-          alert('合言葉をコピーしました．');
-        } catch {
-          alert('コピーに失敗しました．手動で入力してください：どら焼き');
+    // trap 消化の確認（submit_count か trap_done で判定）
+    const nsSubmit = parseInt(localStorage.getItem(pid + ':submit_count') || 'NaN', 10);
+    const legacySubmit = parseInt(localStorage.getItem('submit_count') || 'NaN', 10);
+    const submitCount = Number.isFinite(nsSubmit) ? nsSubmit :
+                        (Number.isFinite(legacySubmit) ? legacySubmit : 0);
+    const trapDone = (localStorage.getItem(pid + ':trap_done') === 'true') ||
+                     (localStorage.getItem('trap_done') === 'true');
+
+    // 10回未満 or trap未消化なら draw へ戻す（往復防止の肝）
+    if (!(tc >= MAX_TRIALS && trapDone)) {
+      location.href = '/draw';
+      return;
+    }
+
+    // 表示
+    document.getElementById('finalId').textContent = pid;
+
+    // コピーUI
+    const toast = document.getElementById('copyToast');
+    function showToast(){
+      toast.setAttribute('aria-hidden','false');
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); toast.setAttribute('aria-hidden','true'); }, 1100);
+    }
+    document.querySelectorAll('.copy-btn[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const el = document.querySelector(btn.getAttribute('data-copy'));
+        const text = (el?.textContent || '').trim();
+        try { await navigator.clipboard.writeText(text); }
+        catch {
+          const ta = document.createElement('textarea'); ta.value = text;
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
         }
+        showToast();
       });
-    })();
-  </script>
+    });
+  })();
+</script>
+
 </body>
 </html>
