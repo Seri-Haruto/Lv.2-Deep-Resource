@@ -1,38 +1,49 @@
 (() => {
   const form = document.getElementById("consentForm");
-  const must = document.getElementById("agreeParticipate");
-  const opt  = document.getElementById("agreeReuse");
-  const btn  = document.getElementById("toProfileBtn");
-  const err  = document.getElementById("consentError");
+  if (!form) return;
 
+  const must = document.getElementById("agreeParticipate"); // 必須
+  const opt  = document.getElementById("agreeReuse");        // 任意
+  const btn  = document.getElementById("toProfileBtn");      // 次へ
+  const err  = document.getElementById("consentError");      // エラーメッセージ
+
+  // 初期は必ず非表示
+  if (err) err.style.display = "none";
+
+  // 「送信を試みたか」のフラグ
+  let tried = false;
+
+  // ボタンの有効化（エラーは tried 後のみ制御）
   function update() {
-    const ok = must && must.checked;
+    const ok = !!must?.checked;
     if (btn) btn.disabled = !ok;
-    if (err) err.style.display = ok ? "none" : "block";
+    if (tried && err) err.style.display = ok ? "none" : "block";
   }
 
-  if (must) must.addEventListener("change", update);
-  if (opt)  opt.addEventListener("change", () => { /* 任意なので何もしない */ });
+  // チェックが変わったら見た目更新（初期はエラーを出さない）
+  must?.addEventListener("change", update);
+  opt?.addEventListener("change", () => { /* 任意なので何もしない */ });
 
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      // 必須が未チェックなら送信させない（ブラウザrequiredでも止まるが二重で保険）
-      if (!(must && must.checked)) {
-        e.preventDefault();
-        update();
-        return;
-      }
-      // 同意状態を記録（任意は未チェックなら false）
-      try {
-        localStorage.setItem("consent_participate", "true");
-        localStorage.setItem("consent_reuse", opt && opt.checked ? "true" : "false");
-        localStorage.setItem("consent_version", "v1.1");
-        localStorage.setItem("consented", "true"); // 互換キー：profile.js が参照している想定
-      } catch (_) {}
-      // 送信はそのまま → /profile へ遷移
-    });
-  }
+  // 送信時のみエラー表示を評価
+  form.addEventListener("submit", (e) => {
+    const ok = !!must?.checked;
+    if (!ok) {
+      e.preventDefault();
+      tried = true;     // ここからエラー表示を許可
+      update();         // エラーを表示
+      return;
+    }
 
-  // 初期状態を反映
+    // 同意状態を保存
+    try {
+      localStorage.setItem("consent_participate", "true");
+      localStorage.setItem("consent_reuse", opt?.checked ? "true" : "false");
+      localStorage.setItem("consent_version", "v1.1");
+      localStorage.setItem("consented", "true");
+    } catch (_) {}
+    // そのまま /profile へ
+  });
+
+  // ボタン活性だけ反映（エラーは出さない）
   update();
 })();
