@@ -1,34 +1,58 @@
 (() => {
-  const issuedIdEl     = document.getElementById('issuedId');
-  const saveBtn        = document.getElementById('saveProfileBtn');
+  'use strict';
 
-  const genderEl       = document.getElementById('gender');
-  const ageEl          = document.getElementById('age');
-  const handedEl       = document.getElementById('handed');
-  const deviceTypeEl   = document.getElementById('deviceType');
+  const issuedIdEl   = document.getElementById('issuedId');
+  const saveBtn      = document.getElementById('saveProfileBtn');
+  if (!saveBtn) return;
 
-  const errSummaryEl   = document.getElementById('errorSummary');
-  const errGenderEl    = document.getElementById('err-gender');
-  const errAgeEl       = document.getElementById('err-age');
-  const errHandedEl    = document.getElementById('err-handed');
-  const errDeviceEl    = document.getElementById('err-deviceType');
+  const genderEl     = document.getElementById('gender');
+  const ageEl        = document.getElementById('age');
+  const handedEl     = document.getElementById('handed');
+  const deviceTypeEl = document.getElementById('deviceType');
 
-  const CONSENT_VERSION = (window.CONSENT_VERSION || 'v1.0');
+  const errSummaryEl = document.getElementById('errorSummary');
+  const errGenderEl  = document.getElementById('err-gender');
+  const errAgeEl     = document.getElementById('err-age');
+  const errHandedEl  = document.getElementById('err-handed');
+  const errDeviceEl  = document.getElementById('err-deviceType');
+
+  const CONSENT_VERSION =
+    (typeof window.CONSENT_VERSION === 'string' && window.CONSENT_VERSION) ||
+    localStorage.getItem('consent_version') ||
+    'v1.1';
 
   let participantId = localStorage.getItem('participant_id') || '';
-  let attempted = false; // ★ クリックするまでエラーを出さない
+  let attempted = false;
 
-  // ---- ID発行表示 ----
+  // 共通：フィールドの見た目エラー制御
+  function setFieldError(fieldEl, msgEl, message) {
+    if (!fieldEl || !msgEl) return;
+    if (message) {
+      fieldEl.classList.add('is-invalid');          // ← 枠を赤に
+      fieldEl.setAttribute('aria-invalid', 'true');
+      msgEl.textContent = message;
+      msgEl.style.display = 'block';
+    } else {
+      fieldEl.classList.remove('is-invalid');       // ← 枠を元に戻す
+      fieldEl.setAttribute('aria-invalid', 'false');
+      msgEl.textContent = '';
+      msgEl.style.display = 'none';
+    }
+  }
+
+  // ---- ID発行 ----
   async function ensureParticipantId() {
-    if (participantId) return;
+    if (participantId) return true;
     try {
       const r = await fetch('/issue_id');
       if (!r.ok) throw new Error('issue id failed');
       const j = await r.json();
-      participantId = j.id;
+      if (!j?.id) throw new Error('id missing');
+      participantId = String(j.id);
       localStorage.setItem('participant_id', participantId);
+      return true;
     } catch {
-      // 発行失敗時はエラーサマリで通知（クリック時に表示）
+      return false;
     }
   }
 
@@ -44,74 +68,64 @@
 
   // ---- エラーUI ----
   function clearErrors() {
-    // サマリ
-    errSummaryEl.style.display = 'none';
-    errSummaryEl.innerHTML = '';
-
-    // 個別
-    [
-      [genderEl, errGenderEl],
-      [ageEl, errAgeEl],
-      [handedEl, errHandedEl],
-      [deviceTypeEl, errDeviceEl],
-    ].forEach(([field, msg]) => {
-      if (field) field.setAttribute('aria-invalid', 'false');
-      if (msg) { msg.style.display = 'none'; msg.textContent = ''; }
-    });
+    if (errSummaryEl) {
+      errSummaryEl.style.display = 'none';
+      errSummaryEl.innerHTML = '';
+    }
+    setFieldError(genderEl,     errGenderEl,  '');
+    setFieldError(ageEl,        errAgeEl,     '');
+    setFieldError(handedEl,     errHandedEl,  '');
+    setFieldError(deviceTypeEl, errDeviceEl,  '');
   }
 
   function showErrors(map) {
-    // サマリ
     const lines = Object.values(map);
-    if (lines.length) {
-      errSummaryEl.innerHTML = `<strong>入力内容をご確認ください。</strong><ul style="margin:6px 0 0 18px;">${
-        lines.map(s => `<li>${s}</li>`).join('')
-      }</ul>`;
+    if (lines.length && errSummaryEl) {
+      errSummaryEl.innerHTML =
+        `<strong>入力内容をご確認ください。</strong>` +
+        `<ul style="margin:6px 0 0 18px;">${lines.map(s => `<li>${s}</li>`).join('')}</ul>`;
       errSummaryEl.style.display = '';
       errSummaryEl.focus?.();
-      // スクロール上部へ
-      setTimeout(() => errSummaryEl.scrollIntoView({behavior:'smooth', block:'start'}), 0);
+      setTimeout(() => errSummaryEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
     }
 
-    // 個別
-    if (map.gender)    { genderEl.setAttribute('aria-invalid','true'); errGenderEl.textContent = map.gender; errGenderEl.style.display=''; }
-    if (map.age)       { ageEl.setAttribute('aria-invalid','true'); errAgeEl.textContent = map.age; errAgeEl.style.display=''; }
-    if (map.handed)    { handedEl.setAttribute('aria-invalid','true'); errHandedEl.textContent = map.handed; errHandedEl.style.display=''; }
-    if (map.device)    { deviceTypeEl.setAttribute('aria-invalid','true'); errDeviceEl.textContent = map.device; errDeviceEl.style.display=''; }
+    setFieldError(genderEl,     errGenderEl,  map.gender  || '');
+    setFieldError(ageEl,        errAgeEl,     map.age     || '');
+    setFieldError(handedEl,     errHandedEl,  map.handed  || '');
+    setFieldError(deviceTypeEl, errDeviceEl,  map.device  || '');
   }
 
   function validate() {
-  const errors = {};
+    const errors = {};
 
-  if (!genderEl.value)     errors.gender = '性別を選択してください。';
+    if (!genderEl?.value) errors.gender = '性別を選択してください。';
 
-  // ★ 年齢: 整数入力の検証
-  const ageRaw = (ageEl.value || '').trim();
-  if (!ageRaw) {
-    errors.age = '年齢を入力してください。';
-  } else {
-    const ageNum = Number(ageRaw);
-    if (!Number.isInteger(ageNum) || ageNum < 10 || ageNum > 120) {
-      errors.age = '年齢は18〜120の整数で入力してください。';
+    // 年齢: 18〜120 の整数
+    const ageRaw = (ageEl?.value || '').trim();
+    if (!ageRaw) {
+      errors.age = '年齢を入力してください。';
+    } else {
+      const ageNum = Number(ageRaw);
+      if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 120) {
+        errors.age = '年齢は18〜120の整数で入力してください。';
+      }
     }
-  }
 
-  if (!handedEl.value)     errors.handed = '利き手を選択してください。';
-  if (!deviceTypeEl.value) errors.device = 'インターフェースを選択してください。';
+    if (!handedEl?.value)     errors.handed = '利き手を選択してください。';
+    if (!deviceTypeEl?.value) errors.device = '入力端末を選択してください。';
 
-  const consentOK = localStorage.getItem('consent_participate') === 'true';
-  if (!consentOK) {
-    errors.consent = '同意ページで「実験参加への同意」を完了してください。';
+    const consentOK = localStorage.getItem('consent_participate') === 'true';
+    if (!consentOK) {
+      errors.consent = '同意ページで「実験参加への同意」を完了してください。';
+    }
+    if (!participantId) {
+      errors.pid = '参加者IDの発行に失敗しました。ページを更新して再度お試しください。';
+    }
+    return { ok: Object.keys(errors).length === 0, errors };
   }
-  if (!participantId) {
-    errors.pid = '参加者IDの発行に失敗しました。ページを更新して再度お試しください。';
-  }
-  return { ok: Object.keys(errors).length === 0, errors };
-}
-
 
   async function submit() {
-    attempted = true; // ★ 初めて押した瞬間に「以降はエラー表示を許可」
+    attempted = true;
 
     clearErrors();
     const { ok, errors } = validate();
@@ -121,7 +135,7 @@
       user_id: participantId,
       consent_version: localStorage.getItem('consent_version') || CONSENT_VERSION,
       gender: genderEl.value,
-      age_years: Number(ageEl.value), 
+      age_years: Number(ageEl.value),
       handedness: handedEl.value,
       device_type: deviceTypeEl.value,
       consent: localStorage.getItem('consent_participate') === 'true'
@@ -138,12 +152,11 @@
       if (!r.ok || j.status !== 'success') {
         throw new Error(j.message || '保存に失敗しました。時間をおいて再度お試しください。');
       }
-      // OK → 次のページへ
-      localStorage.setItem('consented','true'); // 念のため
-      localStorage.setItem('trial_count','0');  // 実験のカウンタ初期化
-      location.href = '/draw';
+      localStorage.setItem('consented','true');
+      localStorage.setItem('trial_count','0');
+      location.href = '/howto';
     } catch (e) {
-      showErrors({ server: e.message });
+      showErrors({ server: e.message || 'サーバーエラーが発生しました。' });
     } finally {
       saveBtn.disabled = false;
     }
@@ -151,24 +164,27 @@
 
   // ---- 初期化 ----
   (async function init(){
-    // まずID
-    await ensureParticipantId();
+    const idOk = await ensureParticipantId();
     renderIdBadge();
+    saveBtn.disabled = !idOk;
 
-    // IDが取れたらボタンを有効化（入力途中のエラーは出さない）
-    saveBtn.disabled = !participantId;
-
-    // クリック時のみバリデーション表示
     saveBtn.addEventListener('click', submit);
 
-    // 初回クリック後は、項目変更で再評価（＝ユーザーが直したらエラーが消える）
-    [genderEl, ageEl, handedEl, deviceTypeEl].forEach(el => {
-      el.addEventListener('change', () => {
-        if (!attempted) return; // 押す前は出さない
-        clearErrors();
-        const { ok, errors } = validate();
-        if (!ok) showErrors(errors);
-      });
-    });
+    const revalidateOnChange = () => {
+      if (!attempted) return;
+      clearErrors();
+      const { ok, errors } = validate();
+      if (!ok) showErrors(errors);
+    };
+
+    // 入力時に即見た目を正す（枠がおかしく残らない）
+    genderEl?.addEventListener('change', () => { setFieldError(genderEl, errGenderEl, ''); revalidateOnChange(); });
+    handedEl?.addEventListener('change', () => { setFieldError(handedEl, errHandedEl, ''); revalidateOnChange(); });
+    deviceTypeEl?.addEventListener('change', () => { setFieldError(deviceTypeEl, errDeviceEl, ''); revalidateOnChange(); });
+    ageEl?.addEventListener('input', () => { setFieldError(ageEl, errAgeEl, ''); revalidateOnChange(); });
+
+    if (!idOk) {
+      showErrors({ pid: '参加者IDの発行に失敗しました。ページを更新して再度お試しください。' });
+    }
   })();
 })();
